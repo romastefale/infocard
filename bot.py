@@ -28,9 +28,13 @@ def page(username: str) -> str:
 
 
 def photo(source: str) -> str:
-    match = re.search(r'<meta[^>]+property=["\\']og:image["\\'][^>]+content=["\\']([^"\\']+)', source, re.I)
-    if not match:
-        match = re.search(r'<meta[^>]+content=["\\']([^"\\']+)["\\'][^>]+property=["\\']og:image["\\']', source, re.I)
+    patterns = (
+        r'<meta[^>]+property="og:image"[^>]+content="([^"]+)',
+        r"<meta[^>]+property='og:image'[^>]+content='([^']+)",
+        r'<meta[^>]+content="([^"]+)"[^>]+property="og:image"',
+        r"<meta[^>]+content='([^']+)'[^>]+property='og:image'",
+    )
+    match = next((re.search(pattern, source, re.I) for pattern in patterns if re.search(pattern, source, re.I)), None)
     if not match:
         raise ValueError("profile photo not found")
 
@@ -56,7 +60,7 @@ async def file(bot: Bot, url: str) -> str:
 def card(username: str, file_id: str) -> InputRichMessage:
     name = html.escape(username)
     return InputRichMessage(
-        html="\\n".join([
+        html="\n".join([
             '<img src="tg://photo?id=photo">',
             f"<h3>@{name}</h3>",
             '<tg-button-row align="center">',
