@@ -1,5 +1,5 @@
 // Leitura do file_id do Bot API para achar o id do dono de uma foto de perfil.
-// Funções puras (sem SDK), para poderem ser testadas fora da plataforma.
+// Funções puras (sem SDK).
 //
 // O file_id é o binário serializado do TDLib, com zeros comprimidos (0x00 + contagem) e
 // codificado em base64url. O runtime não tem Buffer (nem se pode contar com atob), então
