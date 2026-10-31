@@ -1,9 +1,9 @@
-// Extração da foto de perfil na página pública https://t.me/<usuario>. Funções puras.
+// Extração da foto de perfil na página pública https://t.me/<usuario>.
 
 export const USUARIO_VALIDO = /^[A-Za-z0-9_]{1,32}$/;
 
 // equivalente ao html.unescape do bot Python, para as entidades que aparecem em URLs
-export function desescapar(texto) {
+function desescapar(texto) {
   return texto
     .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))

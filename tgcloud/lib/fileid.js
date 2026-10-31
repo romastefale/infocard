@@ -1,5 +1,4 @@
 // Leitura do file_id do Bot API para achar o id do dono de uma foto de perfil.
-// Funções puras (sem SDK).
 //
 // O file_id é o binário serializado do TDLib, com zeros comprimidos (0x00 + contagem) e
 // codificado em base64url. O runtime não tem Buffer (nem se pode contar com atob), então
@@ -7,7 +6,7 @@
 
 const ALFABETO = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
-export function base64urlParaBytes(texto) {
+function base64urlParaBytes(texto) {
   const limpo = String(texto).replace(/=+$/, '');
   const saida = [];
   let acc = 0;
@@ -27,7 +26,7 @@ export function base64urlParaBytes(texto) {
 }
 
 // 0x00 seguido de N = N zeros.
-export function rleDecode(bytes) {
+function rleDecode(bytes) {
   const saida = [];
   for (let i = 0; i < bytes.length; i++) {
     if (bytes[i] === 0 && i + 1 < bytes.length) {
@@ -46,7 +45,7 @@ const LIMITE_ID = 10n ** 15n; // mesmo teto do bot Python
 
 // Leitura estrutural: tipo, dc, [file_reference], id, access_hash, e a origem da foto.
 // Origem 2 (miniatura do perfil) ou 3 (perfil grande) carrega o id do dono (dialog_id).
-export function lerEstrutura(dados) {
+function lerEstrutura(dados) {
   const dv = new DataView(dados.buffer, dados.byteOffset, dados.byteLength);
   let pos = 0;
   const precisa = (n) => {
@@ -84,7 +83,7 @@ export function lerEstrutura(dados) {
 
 // A busca do bot Python, igual: acha o marcador 2 ou 3 e lê um int64 logo depois (a 1 ou 4 bytes).
 // Pode dar falso positivo; por isso só é usada quando a leitura estrutural não acha nada.
-export function buscaHeuristica(dados) {
+function buscaHeuristica(dados) {
   const dv = new DataView(dados.buffer, dados.byteOffset, dados.byteLength);
   const fim = Math.max(0, dados.length - 24);
   for (let off = 0; off < fim; off++) {
