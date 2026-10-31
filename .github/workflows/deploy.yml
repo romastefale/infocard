@@ -1,10 +1,9 @@
 name: Deploy (Telegram Serverless)
 
 # Cada push em main que altera o código do bot publica os módulos (`tgcloud push`)
-# e aplica migrações seguras. Requer o secret ACCESS_TOKEN (BotFather → bot →
+# e aplica migrações seguras. Requer o secret TGCLOUD_TOKEN (BotFather → bot →
 # Serverless → CLI Access → Access token, formato app<id>:<secret>). NÃO é o token
-# da Bot API. O CLI oficial só lê a variável TGCLOUD_TOKEN (documentação,
-# "Authentication"), então o secret é mapeado para ela em `env` abaixo.
+# da Bot API. É a variável que o CLI oficial lê no CI (documentação, "Authentication").
 
 on:
   push:
@@ -35,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      TGCLOUD_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -47,7 +46,7 @@ jobs:
       - name: Verificar secret
         run: |
           if [ -z "$TGCLOUD_TOKEN" ]; then
-            echo "::error::Defina o secret ACCESS_TOKEN (Settings → Secrets and variables → Actions)."
+            echo "::error::Defina o secret TGCLOUD_TOKEN (Settings → Secrets and variables → Actions)."
             exit 1
           fi
 
