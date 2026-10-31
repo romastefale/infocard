@@ -1,5 +1,3 @@
-// @usuario → id numérico. Mesmo caminho do bot Python:
-// página pública → og:image → send_photo no chat de cache → file_id → dialogId.
 import { api, fetch } from 'sdk';
 import { CACHE_CHAT_ID } from './config.js';
 import { USUARIO_VALIDO, extrairFoto } from './pagina.js';

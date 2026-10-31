@@ -1,9 +1,3 @@
-// Leitura do file_id do Bot API para achar o id do dono de uma foto de perfil.
-//
-// O file_id é o binário serializado do TDLib, com zeros comprimidos (0x00 + contagem) e
-// codificado em base64url. O runtime não tem Buffer (nem se pode contar com atob), então
-// a decodificação é feita à mão.
-
 const ALFABETO = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
 function base64urlParaBytes(texto) {
@@ -25,7 +19,6 @@ function base64urlParaBytes(texto) {
   return Uint8Array.from(saida);
 }
 
-// 0x00 seguido de N = N zeros.
 function rleDecode(bytes) {
   const saida = [];
   for (let i = 0; i < bytes.length; i++) {
@@ -41,10 +34,8 @@ function rleDecode(bytes) {
 
 const FLAG_WEB = 1 << 24;
 const FLAG_REF = 1 << 25;
-const LIMITE_ID = 10n ** 15n; // mesmo teto do bot Python
+const LIMITE_ID = 10n ** 15n;
 
-// Leitura estrutural: tipo, dc, [file_reference], id, access_hash, e a origem da foto.
-// Origem 2 (miniatura do perfil) ou 3 (perfil grande) carrega o id do dono (dialog_id).
 function lerEstrutura(dados) {
   const dv = new DataView(dados.buffer, dados.byteOffset, dados.byteLength);
   let pos = 0;
@@ -57,7 +48,7 @@ function lerEstrutura(dados) {
   const tipoEFlags = i32();
   const dc = i32();
   const info = { tipo: tipoEFlags & ~(FLAG_WEB | FLAG_REF), dc, variante: null, dialogId: null };
-  if (tipoEFlags & FLAG_WEB) return info; // arquivo da web: não tem origem de foto
+  if (tipoEFlags & FLAG_WEB) return info;
   if (tipoEFlags & FLAG_REF) {
     precisa(1);
     let tamanho = dados[pos];
@@ -69,9 +60,8 @@ function lerEstrutura(dados) {
     }
     pos += Math.ceil((cabecalho + tamanho) / 4) * 4;
   }
-  i64(); // id do arquivo
-  i64(); // access_hash
-  // tipos de foto: 0 miniatura, 1 foto de perfil, 2 foto
+  i64();
+  i64();
   if (info.tipo > 2) return info;
   info.variante = i32();
   if (info.variante === 2 || info.variante === 3) {
@@ -81,8 +71,6 @@ function lerEstrutura(dados) {
   return info;
 }
 
-// A busca do bot Python, igual: acha o marcador 2 ou 3 e lê um int64 logo depois (a 1 ou 4 bytes).
-// Pode dar falso positivo; por isso só é usada quando a leitura estrutural não acha nada.
 function buscaHeuristica(dados) {
   const dv = new DataView(dados.buffer, dados.byteOffset, dados.byteLength);
   const fim = Math.max(0, dados.length - 24);
@@ -98,7 +86,6 @@ function buscaHeuristica(dados) {
   return null;
 }
 
-// Devolve { userId, metodo } ou lança Error com o motivo (que aparece no resultado inline).
 export function dialogIdDoFileId(fileId) {
   const bruto = base64urlParaBytes(fileId);
   let detalhe = '';

@@ -1,6 +1,3 @@
-// handlers/inline_query.js — roda a cada consulta inline (@bot usuario).
-// Responde com um resultado: @usuario, o id e o link tg://user?id=<id>; se falhar,
-// o resultado mostra o erro (igual ao bot Python).
 import { api } from 'sdk';
 import { resolver } from '../lib/resolver.js';
 

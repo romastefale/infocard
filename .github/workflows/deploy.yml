@@ -1,10 +1,5 @@
 name: Deploy (Telegram Serverless)
 
-# Cada push em main que altera o código do bot publica os módulos (`tgcloud push`)
-# e aplica migrações seguras. Requer o secret TGCLOUD_TOKEN (BotFather → bot →
-# Serverless → CLI Access → Access token, formato app<id>:<secret>). NÃO é o token
-# da Bot API. É a variável que o CLI oficial lê no CI (documentação, "Authentication").
-
 on:
   push:
     branches: [main]
@@ -50,12 +45,8 @@ jobs:
             exit 1
           fi
 
-      # CLI oficial @tgcloud/cli, local (versão do lockfile). `npx --no-install` nunca
-      # baixa nada do registro, então um pacote avulso chamado `tgcloud` não pode entrar no lugar.
       - run: npm ci
 
-      # O estado local (.tgcloud/) não existe no runner; `fetch` baixa o estado da nuvem
-      # para que o `push` saiba em qual revisão está se baseando.
       - name: Sincronizar estado da nuvem
         run: npx --no-install tgcloud fetch
 
@@ -65,8 +56,6 @@ jobs:
       - name: Publicar módulos
         run: npx --no-install tgcloud push
 
-      # `migrate` sem flag exige terminal interativo. Em CI usamos --safe
-      # (aplica só mudanças aditivas e ignora as destrutivas). Sem --yes de propósito.
       - name: Migrar banco
         run: |
           mode="${{ github.event.inputs.migrate_mode || 'safe' }}"
