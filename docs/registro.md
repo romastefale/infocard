@@ -58,6 +58,7 @@ As correções do commit `4f634de` foram feitas em lote (oito alterações junta
 
 - Sem comentários no código; sem testes escritos por quem escreve o código; publicar direto na `main` (responsável pelo projeto).
 - A busca MTProto só roda no privado; grupos são ignorados.
+- No `resolver.py`, a espera pedida pelo Telegram (`FloodWait`) é cumprida e a operação é repetida, em qualquer chamada MTProto da busca, até 600 s de espera somada; o job tem `timeout-minutes: 15`. Acima disso o chat recebe a falha com o tempo pedido. Base: a política do TDLib de aguardar `FLOOD_WAIT_X` por X s. O valor 600 é escolha minha. Antes desta mudança o teto era 120 s e o run 41340057109 (espera de 129 s) desistiu.
 - Limite das buscas: 1 por chat e 6 no total a cada 60 s. Valores escolhidos por mim, não são limites do Telegram.
 - Se o controle de limite falhar, o bot não dispara e avisa.
 - Qualquer 400 do `getChat` de username ou ID inicia a busca MTProto. A entrada já é validada antes.

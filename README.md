@@ -15,6 +15,7 @@ O que o Telegram não devolver, por privacidade ou por restrição da API, não 
 ## Limitações conhecidas
 
 - A busca por MTProto depende do `GH_DISPATCH_TOKEN` ter permissão para disparar workflows. O deploy nº 18 passou na validação dessa permissão; um disparo feito pelo próprio bot ainda não foi observado.
+- Se o Telegram pedir espera (`FloodWait`), o job espera e repete, até 600 s somados; acima disso, avisa o chat com o tempo pedido.
 - Cada busca MTProto roda em um job do Actions; o tempo até a resposta depende da fila e do job, e não foi medido.
 - Limite das buscas MTProto: 1 por chat e 6 no total a cada 60 s. São valores escolhidos pelo responsável do projeto, não limites do Telegram (`tgcloud/lib/limite.js`).
 

@@ -17,7 +17,7 @@ from telethon.tl.functions.contacts import ResolveUsernameRequest
 from telethon.tl.functions.users import GetFullUserRequest, GetUsersRequest
 from telethon.tl.types import Channel, InputChannel, InputUser, PeerChannel, PeerUser, User
 
-ESPERA_MAXIMA = 120
+ESPERA_TOTAL = 600
 LIMITE_TEXTO = 4000
 USERNAME_VALIDO = re.compile(r"[A-Za-z0-9_]{1,32}")
 CHAT_VALIDO = re.compile(r"-?[0-9]{1,16}")
@@ -114,31 +114,41 @@ async def completo(cliente, entidade):
     return None
 
 
+async def com_espera(operacao):
+    gasto = 0
+    avisado = False
+    while True:
+        try:
+            return await operacao()
+        except errors.FloodWaitError as erro:
+            espera = erro.seconds + 1
+            if gasto + espera > ESPERA_TOTAL:
+                raise
+            print("FloodWaitError", erro.seconds, "- aguardando", espera, "s para repetir")
+            if not avisado and os.environ.get("CHAT_ID"):
+                postar(os.environ["CHAT_ID"], f"O Telegram pediu uma espera de {erro.seconds} s. Vou aguardar e repetir a busca.", False)
+                avisado = True
+            gasto += espera
+            await asyncio.sleep(espera)
+
+
 async def coletar(alvo):
     cliente = TelegramClient(StringSession(), int(os.environ["API_ID"]), os.environ["API_HASH"])
     try:
-        for tentativa in (1, 2):
-            try:
-                await cliente.start(bot_token=os.environ["BOT_TOKEN"])
-                if ID_VALIDO.fullmatch(alvo):
-                    entidade = await entidade_por_id(cliente, int(alvo))
-                else:
-                    entidade = entidade_de(await cliente(ResolveUsernameRequest(alvo)))
-                break
-            except errors.FloodWaitError as erro:
-                if tentativa == 2 or erro.seconds > ESPERA_MAXIMA:
-                    raise
-                print("FloodWaitError", erro.seconds, "- aguardando para tentar de novo")
-                await asyncio.sleep(erro.seconds + 1)
+        await com_espera(lambda: cliente.start(bot_token=os.environ["BOT_TOKEN"]))
+        if ID_VALIDO.fullmatch(alvo):
+            entidade = await com_espera(lambda: entidade_por_id(cliente, int(alvo)))
+        else:
+            entidade = entidade_de(await com_espera(lambda: cliente(ResolveUsernameRequest(alvo))))
         if entidade is None:
             raise LookupError("O Telegram não devolveu os dados dessa entrada.")
         dados = {"entidade": entidade, "completo": None, "foto": None, "notas": []}
         try:
-            dados["completo"] = await completo(cliente, entidade)
+            dados["completo"] = await com_espera(lambda: completo(cliente, entidade))
         except errors.RPCError as erro:
             dados["notas"].append(f"Dados completos indisponíveis: {type(erro).__name__}: {erro}")
         try:
-            dados["foto"] = await cliente.download_profile_photo(entidade, file=bytes)
+            dados["foto"] = await com_espera(lambda: cliente.download_profile_photo(entidade, file=bytes))
         except Exception as erro:
             dados["notas"].append(f"Foto não baixada: {type(erro).__name__}: {erro}")
         return dados
