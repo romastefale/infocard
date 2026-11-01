@@ -39,7 +39,7 @@ export function relatorioLeitura(chat) {
   return { titulo, html: linhas.join('\n') };
 }
 
-export function relatorioFalha(entrada, falha) {
+export function relatorioFalha(entrada, falha, extras = []) {
   const linhas = ['<b>Não foi possível ler</b>', `Entrada: ${esc(entrada.rotulo)} (${entrada.tipo === 'id' ? 'ID' : 'username'})`];
   if (falha.apiErro) {
     linhas.push(`Bot API respondeu ${esc(falha.code)}: ${esc(recorte(falha.description, 500))}`);
@@ -50,8 +50,9 @@ export function relatorioFalha(entrada, falha) {
     linhas.push(`Erro: ${esc(falha.name)}: ${esc(recorte(falha.message, 500))}`);
   }
   if (entrada.tipo === 'username') {
-    linhas.push('O Bot API só resolve @username de canal ou supergrupo (getChat). Para usuário comum, envie o ID numérico.');
+    linhas.push('O Bot API só resolve @username de canal, supergrupo ou bot (getChat).');
   }
+  for (const extra of extras) linhas.push(esc(extra));
   return { titulo: recorte(`Não lido: ${entrada.rotulo}`, 100), html: linhas.join('\n') };
 }
 
@@ -63,4 +64,13 @@ export function relatorioInvalido(texto) {
     `Recebido: ${recebido ? esc(recorte(recebido, 100)) : '(sem texto)'}`,
   ];
   return { titulo: 'Envie um @username ou um ID', html: linhas.join('\n') };
+}
+
+export function relatorioBuscando(entrada) {
+  const linhas = [
+    '<b>Buscando…</b>',
+    `Entrada: ${esc(entrada.rotulo)} (username)`,
+    'O Bot API não resolve esse @username. Iniciei a busca por MTProto; a resposta chega neste chat em instantes.',
+  ];
+  return { titulo: recorte(`Buscando ${entrada.rotulo}`, 100), html: linhas.join('\n') };
 }

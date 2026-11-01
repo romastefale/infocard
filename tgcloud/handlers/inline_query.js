@@ -7,7 +7,7 @@ export default async function (query) {
     await api.answerInlineQuery({ inline_query_id: query.id, results: [], cache_time: 0, is_personal: true });
     return;
   }
-  const { titulo, html } = await consultar(texto);
+  const { titulo, html } = await consultar(texto, { canal: 'inline' });
   await api.answerInlineQuery({
     inline_query_id: query.id,
     results: [{

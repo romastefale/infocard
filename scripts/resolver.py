@@ -38,13 +38,16 @@ def enviar(chat_id, texto):
         raise RuntimeError(f"sendMessage falhou: {retorno.get('error_code')} {retorno.get('description')}")
 
 
-def descrever(resultado):
+def descrever(resultado, alvo):
     if isinstance(resultado.peer, PeerUser):
         entidade = next(u for u in resultado.users if u.id == resultado.peer.user_id)
     else:
         entidade = resultado.chats[0]
     foto = getattr(entidade, "photo", None)
+    usernames = [u.username for u in (getattr(entidade, "usernames", None) or []) if getattr(u, "active", False)]
     info = {
+        "consultado": alvo,
+        "usernames": usernames,
         "id": utils.get_peer_id(entidade),
         "username": getattr(entidade, "username", None),
         "foto": foto is not None and not type(foto).__name__.endswith("Empty"),
@@ -72,8 +75,11 @@ def relatorio(info):
         f"ID: <code>{esc(info['id'])}</code>",
         f"Nome: {esc(info['nome'])}" if info["nome"] else "Nome: (vazio)",
     ]
+    linhas.append(f"Consultado: @{esc(info['consultado'])}")
     if info["username"]:
-        linhas.append(f"Username: @{esc(info['username'])}")
+        linhas.append(f"Username principal: @{esc(info['username'])}")
+    if info["usernames"]:
+        linhas.append("Usernames ativos: " + ", ".join(f"@{esc(u)}" for u in info["usernames"]))
     if info["marcas"]:
         linhas.append(f"Marcas: {esc(', '.join(info['marcas']))}")
     linhas.append(f"Foto de perfil: {'sim' if info['foto'] else 'não'}")
@@ -108,7 +114,7 @@ async def principal():
         codigo = 1
     else:
         try:
-            info = descrever(await resolver(alvo))
+            info = descrever(await resolver(alvo), alvo)
             print(json.dumps(info, ensure_ascii=False))
             texto = relatorio(info)
             codigo = 0

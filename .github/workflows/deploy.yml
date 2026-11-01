@@ -50,6 +50,16 @@ jobs:
       - name: Sincronizar estado da nuvem
         run: npx --no-install tgcloud fetch
 
+      - name: Injetar segredos no módulo do bot
+        env:
+          GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_DISPATCH_TOKEN" ]; then
+            echo "::error::Defina o secret GH_DISPATCH_TOKEN (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          node -e "require('fs').writeFileSync('tgcloud/lib/segredos.js', 'export const GH_DISPATCH_TOKEN = ' + JSON.stringify(process.env.GH_DISPATCH_TOKEN) + ';\n')"
+
       - name: Mudanças a publicar
         run: npx --no-install tgcloud status
 

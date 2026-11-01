@@ -23,7 +23,8 @@ Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no p
 | `tgcloud/lib/` | Módulos compartilhados. |
 | `tgcloud/schema.js` | Schema do banco. Sem tabelas; só o import do scaffold, porque a plataforma recusa módulo vazio. |
 | `.github/workflows/deploy.yml` | Publica a cada push em `main` que altera `tgcloud/**` e arquivos de configuração. |
-| `.github/workflows/resolver.yml` | Resolve `@username` por MTProto com `scripts/resolver.py`. Não está ligado ao bot. |
+| `.github/workflows/resolver.yml` | Resolve `@username` por MTProto com `scripts/resolver.py` e responde ao chat pela Bot API. O bot o dispara em `lib/despacho.js`. |
+| `tgcloud/lib/segredos.js` | No git só tem valor vazio. O `deploy.yml` o sobrescreve no runner com o secret `GH_DISPATCH_TOKEN` antes do `push`. Nunca commitar o token. |
 | `.tgcloud/` | Estado do CLI. Nunca editar nem ler. |
 
 Só `.js` dentro de `tgcloud/` vai para a nuvem.
