@@ -1,19 +1,24 @@
 # AGENTS.md
 
-Orientação para assistentes de IA e pessoas neste repositório. Mantenha curto e verdadeiro.
+Orientação para assistentes de IA e pessoas neste repositório. As afirmações técnicas sobre o que funciona ficam em `docs/registro.md`, com data, condição e evidência. Este arquivo não é prova de que algo funciona.
 
 ## O que é
 
-Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no privado ou inline, e responde com o que o Bot API devolve. Não tem Mini App nem endpoints. O banco tem só a tabela `disparos`. Detalhes em `README.md`.
+Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no privado ou inline, e apresenta os dados que a API disponibiliza para a entidade consultada. Sem Mini App nem endpoints. O banco tem a tabela `disparos`.
 
-## Regras do dono
+## Regras do dono (DECISÃO)
 
 - Sem comentários no código.
 - Sem testes escritos por quem escreveu o código. A verificação é a execução real: deploy e Actions.
 - Não afirmar como fato o que não tenha fonte verificável. Dizer o que não foi verificado.
 - Nenhuma falha silenciosa: todo erro chega a quem usou, com a causa.
 - Publicar direto na `main`. Cada push em `tgcloud/**` vai ao ar.
-- Fontes: `docs/Serverless-OFFICIAL`, `docs/tgcloud-sdk.md`, a documentação do Bot API em `romastefale/loggerview` (pasta `biblioteca/core-telegram-org-bots-api`) e o projeto estável `romastefale/abafigurinhas` como referência.
+- Um problema por vez: identificar o comportamento atual, definir o esperado, corrigir, verificar, conferir regressões.
+- Fontes: `docs/Serverless-OFFICIAL`, `docs/tgcloud-sdk.md`, a documentação do Bot API em `romastefale/loggerview` (`biblioteca/core-telegram-org-bots-api`), `romastefale/td`, `romastefale/mtproto` e `romastefale/abafigurinhas` como referência.
+
+## Classificação das afirmações
+
+VERIFICADO, IMPLEMENTADO, HIPÓTESE e DECISÃO, como definido em `docs/registro.md`. Um deploy concluído não prova que as funções estão corretas. Comentários não são requisitos: confira o código e a documentação antes de confiar.
 
 ## Estrutura
 
@@ -21,10 +26,11 @@ Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no p
 |---|---|
 | `tgcloud/handlers/` | Um arquivo por tipo de update: `message.js`, `inline_query.js`. Sem subpastas. |
 | `tgcloud/lib/` | Módulos compartilhados. |
-| `tgcloud/schema.js` | Schema do banco. Tabela `disparos` (controle de limite das buscas MTProto). A plataforma recusa módulo vazio. |
+| `tgcloud/schema.js` | Schema do banco (`disparos`). A plataforma recusa módulo vazio. |
 | `.github/workflows/deploy.yml` | Publica a cada push em `main` que altera `tgcloud/**` e arquivos de configuração. |
-| `.github/workflows/resolver.yml` | Resolve `@username` ou ID por MTProto com `scripts/resolver.py` e responde ao chat pela Bot API. O bot o dispara em `lib/despacho.js`. |
+| `.github/workflows/resolver.yml` | Busca por MTProto com `scripts/resolver.py`. O bot o dispara em `lib/despacho.js`. |
 | `tgcloud/lib/segredos.js` | No git só tem valor vazio. O `deploy.yml` o sobrescreve no runner com o secret `GH_DISPATCH_TOKEN` antes do `push`. Nunca commitar o token. |
+| `docs/registro.md` | O que foi verificado, implementado, hipótese e decisão. |
 | `.tgcloud/` | Estado do CLI. Nunca editar nem ler. |
 
 Só `.js` dentro de `tgcloud/` vai para a nuvem.
@@ -33,32 +39,12 @@ Só `.js` dentro de `tgcloud/` vai para a nuvem.
 
 - Importar módulos do projeto por caminho relativo com `.js`; o SDK pelo nome (`'sdk'`, `'sdk/db'`).
 - Sem sistema de arquivos e sem pacotes npm.
-- O handler recebe o payload do update (`Message`, `InlineQuery`); o `Update` completo está em `ctx.update`.
+- O handler recebe o payload do update; o `Update` completo está em `ctx.update`.
 - Toda chamada de banco é assíncrona: sempre `await`.
 - Sem chaves estrangeiras. Remoção só por `.deprecated('motivo')`. Mudança de tipo é manual.
-- Publicar não altera o banco. O `migrate --safe` do CI só aplica mudanças aditivas.
+- Publicar não altera o banco.
 - O `push` espelha a pasta: o que for editado só no @BotFather é sobrescrito.
-
-## Fatos observados
-
-- `getChat` com `@username` só resolve supergrupo, canal e bot. Usuário comum devolve `400 chat not found`. Fonte: código do servidor do Bot API (`Client.cpp`, `TdOnCheckChatCallback`) e execução na plataforma.
-- Fonte: o código do TDLib (`romastefale/td`, `td/telegram/UserManager.cpp` `get_input_user` e `td/telegram/ChatManager.cpp` `get_input_channel`) monta `inputUser(id, 0)` e `inputChannel(id, 0)` para bots quando o usuário ou canal é desconhecido, e consulta o servidor com `users.getUsers` e `users.getFullUser`. O `chat not found` do Bot API para ID desconhecido vem do servidor do Bot API. Por isso o `resolver.py` também consulta IDs por MTProto. Não foi comprovado ao vivo que o servidor aceita `access_hash` 0 para todo usuário.
-- De dentro da plataforma, `api.github.com` responde (200) e o `GH_DISPATCH_TOKEN` lê o workflow (200). O disparo com um token sem Actions: Read and write devolve `403 Resource not accessible by personal access token`.
-- Na plataforma, o `fetch` falha para `t.me`, `telegram.me` e `telegram.dog`, e responde para `telegram.org`, `api.telegram.org` e `example.com`.
-- O `contacts.resolveUsername` por MTProto com o token do bot, rodando no Actions com Telethon 1.45.0, resolveu um username de usuário comum para o ID.
-- Runtime do Serverless (observado em execução): existem `crypto`, `crypto.subtle`, `crypto.getRandomValues`, `BigInt`, `TextEncoder`, `TextDecoder`, `WebAssembly` e `DataView`. Não existem `atob`, `btoa`, `URL`, `setTimeout`, `performance` nem `WebSocket`. Medições com `Date.now()` deram 0 ms durante a execução.
-- O `fetch` devolve bytes exatos (um PNG de 28159 bytes veio com a assinatura correta) e aceita `Uint8Array` no corpo.
-- MTProto por HTTP: do runner do Actions, `http://149.154.167.51:80/api` respondeu 200 com `resPQ` válido. De dentro do Serverless, os mesmos endereços por IP respondem `403 access denied` do Squid (proxy de saída da plataforma). `https://venus.web.telegram.org/api` responde 403 do nginx do Telegram de qualquer origem. Conclusão: o MTProto não roda dentro do Serverless; por isso a busca por MTProto roda no Actions.
-- O `push` recusa módulo vazio: `Error: Module code is empty` (observado ao esvaziar o `schema.js`).
-- O link `tg://user?id=` só funciona dentro de link embutido ou botão, nunca em texto puro. Fonte: documentação do Bot API.
-
-## Política de falhas (baseada no TDLib, `NetQueryDelayer.cpp`)
-
-- Só se repete leitura idempotente (`getChat`), uma vez, em falha de rede ou 5xx. Escrita e disparo (`sendMessage`, disparo do workflow) nunca se repetem: o TDLib avisa que reenviar sem espera é perigoso, e um disparo duplicado inicia dois workflows.
-- 4xx, como 400, não se repete: é erro final do cliente.
-- O runtime não tem `setTimeout`, então não há espera progressiva. `retry_after` do Telegram é mostrado ao usuário, e o `resolver.py` espera um `FloodWait` de até 120 s.
-- A entidade de um `resolveUsername` é escolhida pelo `peer` do resultado, como o TDLib faz, e não pela posição na lista.
-- O limite das buscas é uma única instrução `INSERT … SELECT … WHERE` (atômica no SQLite); o resultado é lido por `rowsAffected`.
+- O link `tg://user?id=` só funciona dentro de link embutido ou botão (documentação do Bot API).
 
 ## Comandos
 
