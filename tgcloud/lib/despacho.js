@@ -1,6 +1,13 @@
 import { fetch } from 'sdk';
 import { GH_DISPATCH_TOKEN } from './segredos.js';
 
+const EXPLICACOES = {
+  401: 'O token do GitHub é inválido ou expirou. Gere outro e atualize o secret GH_DISPATCH_TOKEN.',
+  403: 'O token do GitHub não tem permissão para disparar workflows. Ele precisa de "Actions: Read and write" neste repositório.',
+  404: 'O token do GitHub não enxerga este repositório ou o workflow resolver.yml.',
+  422: 'O GitHub rejeitou as entradas do workflow resolver.yml.',
+};
+
 const URL_DISPARO = 'https://api.github.com/repos/romastefale/infocard/actions/workflows/resolver.yml/dispatches';
 
 export async function dispararBusca(alvo, chatId) {
@@ -21,7 +28,7 @@ export async function dispararBusca(alvo, chatId) {
   });
   if (res.status !== 204) {
     const corpo = await res.text();
-    const erro = new Error(`GitHub respondeu ${res.status}: ${corpo.slice(0, 300)}`);
+    const erro = new Error(`${EXPLICACOES[res.status] ?? 'O GitHub recusou o disparo.'} (GitHub respondeu ${res.status}: ${corpo.slice(0, 200)})`);
     erro.status = res.status;
     throw erro;
   }

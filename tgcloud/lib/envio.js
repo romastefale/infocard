@@ -1,5 +1,11 @@
 import { api, BotApiError } from 'sdk';
 
+const TECLADO = {
+  keyboard: [[{ text: 'Escolher usuário', request_users: { request_id: 1, request_name: true, request_username: true, request_photo: true } }]],
+  resize_keyboard: true,
+  one_time_keyboard: true,
+};
+
 function textoPuro(html) {
   return html.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 }
@@ -14,10 +20,11 @@ async function comFallback(enviarHtml, enviarPuro) {
   }
 }
 
-export function enviarMensagem(chatId, html) {
+export function enviarMensagem(chatId, html, teclado = false) {
+  const extra = teclado ? { reply_markup: TECLADO } : {};
   return comFallback(
-    () => api.sendMessage({ chat_id: chatId, text: html, parse_mode: 'HTML' }),
-    () => api.sendMessage({ chat_id: chatId, text: textoPuro(html) }),
+    () => api.sendMessage({ chat_id: chatId, text: html, parse_mode: 'HTML', ...extra }),
+    () => api.sendMessage({ chat_id: chatId, text: textoPuro(html), ...extra }),
   );
 }
 

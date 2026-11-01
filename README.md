@@ -8,6 +8,7 @@ Bot de Telegram no Telegram Serverless. Você envia um `@username` ou um ID num�
 - **@username de canal, supergrupo ou bot:** igual ao ID, pelo `getChat`.
 - **@username de usuário comum:** o servidor do Bot API não resolve (`400 chat not found`). No privado, o bot responde "Buscando…" e dispara `.github/workflows/resolver.yml`, que resolve o username por MTProto (Telethon) e responde neste chat em dezenas de segundos. No inline isso não roda: o bot avisa para usar o privado. O relatório traz tudo o que o MTProto devolver para o tipo: de usuário (bio, aniversário, chats em comum, canal pessoal, dados comerciais, restrições, idioma, foto de perfil enviada junto), de bot (descrição, comandos, usuários ativos) e de canal ou supergrupo (descrição, membros, administradores, chat vinculado, modo lento, boosts). O que o Telegram não devolver por privacidade não aparece.
 - **Limite das buscas MTProto:** 1 por chat a cada 60 s e 6 no total a cada 60 s, controlados na tabela `disparos`. Os valores são escolhas conservadoras minhas, e não limites do Telegram; ficam em `tgcloud/lib/limite.js`.
+- **Sem GitHub:** o botão "Escolher usuário" (aparece nas respostas de falha), uma mensagem encaminhada da pessoa e um contato compartilhado também rendem o ID, pelo próprio Bot API. Funcionam mesmo se a busca por MTProto estiver indisponível.
 - Grupos são ignorados.
 
 ## Publicação
@@ -22,7 +23,7 @@ Cada push na `main` que altera `tgcloud/**`, `tgcloud.jsonc`, `package.json`, `p
 | `API_ID` | `resolver.yml` | de my.telegram.org/apps |
 | `API_HASH` | `resolver.yml` | de my.telegram.org/apps |
 | `BOT_TOKEN` | `resolver.yml` | token da Bot API do bot, do @BotFather |
-| `GH_DISPATCH_TOKEN` | `deploy.yml` e bot | token fino só deste repositório, com Actions: escrita. O deploy o grava em `tgcloud/lib/segredos.js` na nuvem (o arquivo no git só tem um valor vazio); o bot o usa para disparar o `resolver.yml`. Para trocar o token, atualize o secret e rode o deploy |
+| `GH_DISPATCH_TOKEN` | `deploy.yml` e bot | token fino só deste repositório, com a permissão Actions: Read and write. Só leitura não basta: o disparo devolve 403. O deploy o grava em `tgcloud/lib/segredos.js` na nuvem (o arquivo no git só tem um valor vazio); o bot o usa para disparar o `resolver.yml`. Para trocar o token, atualize o secret e rode o deploy |
 
 ## Estrutura
 
