@@ -16,5 +16,16 @@ export default async function () {
   const base = { 'User-Agent': 'infocard-bot', Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
   await sondar('api.github.com sem token', 'https://api.github.com/zen', base);
   await sondar('workflow com token', 'https://api.github.com/repos/romastefale/infocard/actions/workflows/resolver.yml', { ...base, Authorization: 'Bearer ' + GH_DISPATCH_TOKEN });
+  try {
+    const res = await fetch('https://api.github.com/repos/romastefale/infocard/actions/workflows/resolver.yml/dispatches', {
+      method: 'POST',
+      headers: { ...base, Authorization: 'Bearer ' + GH_DISPATCH_TOKEN },
+      body: fetch.body.json({ ref: 'main', inputs: {} }),
+    });
+    const corpo = await res.text();
+    console.log('disparo sem entradas (não inicia nada)', 'status', res.status, 'corpo', corpo.slice(0, 300).replace(/\s+/g, ' '));
+  } catch (e) {
+    console.log('disparo sem entradas FALHOU', e.name + ': ' + e.message);
+  }
   return { ok: true };
 }
