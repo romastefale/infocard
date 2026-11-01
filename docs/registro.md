@@ -73,3 +73,17 @@ As correções do commit `4f634de` foram feitas em lote (oito alterações junta
 | Seguir sem limite se o banco falhar | Fail-open | Fail-closed |
 | Repetir o disparo do workflow | Um disparo duplicado inicia dois workflows | Sem repetição |
 | `migrate` depois do `push` | Janela com código novo e schema antigo | `migrate --local` antes do `push` |
+
+## 6. Revisão de 2026-11-01 e limites
+
+| Verificação | Resultado | Limite |
+|---|---|---|
+| Sintaxe de `scripts/resolver.py` (`ast.parse`) | sem erro | não executa o script nem exercita a API do Telethon |
+| Sintaxe dos módulos `.js` (`node --check`) | sem erro | não resolve os imports do SDK nem executa nada |
+| YAML dos workflows (`yaml.safe_load`) | sem erro | não prova que o GitHub aceita os passos |
+| Busca por comentários em `tgcloud/` e `scripts/` | nenhum; as duas ocorrências de `//` são parte de `tg://` | só texto |
+| Releitura de `consulta.js`, `despacho.js`, `limite.js`, `message.js`, `inline_query.js` | nenhum defeito novo encontrado | releitura por quem escreveu o código; não substitui execução |
+
+Pendente por depender de ação do responsável: o `GH_DISPATCH_TOKEN` com Actions: Read and write. Sem ele, a seção 2 não avança e as hipóteses da seção 3 continuam abertas. Depois do deploy com o passo de validação verde, o próximo passo é enviar o `@username` e o ID de alguém que nunca usou o bot e anotar aqui o resultado observado.
+
+Os itens corrigidos em lote no commit `4f634de` não têm verificação individual; o registro os mantém na seção 2.
