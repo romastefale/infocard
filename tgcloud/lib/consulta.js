@@ -2,11 +2,10 @@ import { api, BotApiError } from 'sdk';
 import { lerEntrada } from './entrada.js';
 import { dispararBusca } from './despacho.js';
 import { comRetentativa } from './tentativa.js';
-import { reservarDisparo } from './limite.js';
+import { reservarDisparo, liberarDisparo } from './limite.js';
 import { relatorioLeitura, relatorioFalha, relatorioInvalido, relatorioBuscando } from './relatorio.js';
 
 const transitorioApi = (e) => !(e instanceof BotApiError) || e.code >= 500;
-const transitorioGitHub = (e) => e.status === undefined || e.status >= 500;
 
 function falhaDaApi(e) {
   if (e instanceof BotApiError) {
@@ -28,18 +27,20 @@ export async function consultar(texto, contexto) {
     if (contexto.canal !== 'privado') {
       return relatorioFalha(entrada, falha, ['A busca por MTProto só roda no privado: envie o @username ao bot em uma conversa privada.']);
     }
-    let limite = { permitido: true };
+    let reserva;
     try {
-      limite = await reservarDisparo(contexto.chatId);
+      reserva = await reservarDisparo(contexto.chatId);
     } catch (erroLimite) {
-      console.error('controle de limite indisponível, seguindo sem ele:', erroLimite);
+      console.error('controle de limite indisponível:', erroLimite);
+      return relatorioFalha(entrada, falha, ['O controle de limite das buscas por MTProto está indisponível agora. Tente de novo em instantes.']);
     }
-    if (!limite.permitido) return relatorioFalha(entrada, falha, [limite.motivo]);
+    if (!reserva.permitido) return relatorioFalha(entrada, falha, [reserva.motivo]);
     try {
-      await comRetentativa(() => dispararBusca(entrada.tipo === 'username' ? entrada.chat_id.slice(1) : String(entrada.chat_id), contexto.chatId), transitorioGitHub);
+      await dispararBusca(entrada.tipo === 'username' ? entrada.chat_id.slice(1) : String(entrada.chat_id), contexto.chatId);
       return relatorioBuscando(entrada);
     } catch (erroDespacho) {
       console.error('dispararBusca falhou:', erroDespacho);
+      await liberarDisparo(reserva.id).catch((erroLiberar) => console.error('não consegui liberar a reserva:', erroLiberar));
       return relatorioFalha(entrada, falha, [`Não consegui iniciar a busca por MTProto: ${erroDespacho.name}: ${erroDespacho.message}`]);
     }
   }

@@ -63,16 +63,16 @@ jobs:
       - name: Mudanças a publicar
         run: npx --no-install tgcloud status
 
-      - name: Publicar módulos
-        run: npx --no-install tgcloud push
-
       - name: Migrar banco
         run: |
           mode="${{ github.event.inputs.migrate_mode || 'safe' }}"
           case "$mode" in
-            dry-run) npx --no-install tgcloud migrate --dry-run ;;
-            *)       npx --no-install tgcloud migrate --safe ;;
+            dry-run) npx --no-install tgcloud migrate --dry-run --local ;;
+            *)       npx --no-install tgcloud migrate --safe --local ;;
           esac
+
+      - name: Publicar módulos
+        run: npx --no-install tgcloud push
 
       - name: Estado do webhook
         run: npx --no-install tgcloud webhook

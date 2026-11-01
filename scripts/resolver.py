@@ -45,9 +45,15 @@ def chamar(metodo, corpo, cabecalhos):
     )
     try:
         with urllib.request.urlopen(pedido, timeout=30) as resposta:
-            return json.load(resposta)
+            codigo, bruto = resposta.status, resposta.read()
     except urllib.error.HTTPError as erro:
-        return json.load(erro)
+        codigo, bruto = erro.code, erro.read()
+    except Exception as erro:
+        return {"ok": False, "error_code": 0, "description": f"{type(erro).__name__}: {erro}"}
+    try:
+        return json.loads(bruto)
+    except ValueError:
+        return {"ok": False, "error_code": codigo, "description": f"resposta não é JSON: {bruto[:200]!r}"}
 
 
 def postar(chat_id, texto, formatado):
@@ -81,9 +87,11 @@ def enviar_foto(chat_id, conteudo):
 
 
 def entidade_de(resultado):
-    if isinstance(resultado.peer, PeerUser):
-        return next((u for u in resultado.users if u.id == resultado.peer.user_id), None)
-    return resultado.chats[0] if resultado.chats else None
+    peer = resultado.peer
+    if isinstance(peer, PeerUser):
+        return next((u for u in resultado.users if u.id == peer.user_id), None)
+    alvo_id = peer.channel_id if isinstance(peer, PeerChannel) else getattr(peer, "chat_id", None)
+    return next((c for c in resultado.chats if getattr(c, "id", None) == alvo_id), None)
 
 
 async def entidade_por_id(cliente, numero):
@@ -221,7 +229,15 @@ def descrever(entidade, completo_, alvo):
     return info
 
 
-def relatorio(info, notas):
+def estado_da_foto(info, enviada, tem_chat):
+    if enviada:
+        return "enviada junto"
+    if not info["foto"]:
+        return "não"
+    return "existe, mas não foi possível enviar" if tem_chat else "existe"
+
+
+def relatorio(info, notas, foto):
     topo = [
         "<b>Lido via MTProto</b>",
         f"Consultado: {esc(info['consultado'])}",
@@ -236,13 +252,16 @@ def relatorio(info, notas):
     if info["marcas"]:
         topo.append(f"Marcas: {esc(', '.join(info['marcas']))}")
     campos = [f"{esc(rotulo)}: {esc(valor)}" for rotulo, valor in info["campos"]]
-    rodape = [f"Foto de perfil: {'sim' if info['foto'] else 'não'}"]
+    rodape = [f"Foto de perfil: {foto}"]
     if info["tipo"] in ("usuário", "bot"):
         rodape.append(f'<a href="tg://user?id={info["id"]}">Abrir perfil</a>')
-    rodape.extend(esc(nota) for nota in notas)
-    while campos and len("\n".join(topo + campos + rodape)) > LIMITE_TEXTO:
-        campos.pop()
-    return "\n".join(topo + campos + rodape)
+    avisos = [esc(corte(nota, 300)) for nota in notas]
+    while len("\n".join(topo + campos + rodape + avisos)) > LIMITE_TEXTO and (campos or avisos):
+        if campos:
+            campos.pop()
+        else:
+            avisos.pop()
+    return "\n".join(topo + campos + rodape + avisos)
 
 
 def falha(alvo, motivo):
@@ -267,14 +286,16 @@ async def principal():
             notas = list(dados["notas"])
             print("campos da entidade:", campos_presentes(dados["entidade"]))
             print("campos do perfil completo:", campos_presentes(dados["completo"]))
+            foto_enviada = False
             if chat and dados["foto"]:
                 try:
                     enviar_foto(chat, dados["foto"])
+                    foto_enviada = True
                     print("foto enviada ao chat")
                 except Exception as erro:
                     notas.append(f"Foto não enviada: {erro}")
             info = descrever(dados["entidade"], dados["completo"], alvo)
-            texto = relatorio(info, notas)
+            texto = relatorio(info, notas, estado_da_foto(info, foto_enviada, bool(chat)))
             print("tipo resolvido:", info["tipo"], "| campos extras:", len(info["campos"]))
             codigo = 0
         except errors.UsernameNotOccupiedError:

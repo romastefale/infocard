@@ -7,14 +7,22 @@ const TECLADO = {
 };
 
 function textoPuro(html) {
-  return html.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  return html
+    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '$2 ($1)')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
 }
 
 async function comFallback(enviarHtml, enviarPuro) {
   try {
     return await enviarHtml();
   } catch (e) {
-    if (!(e instanceof BotApiError) || e.code !== 400) throw e;
+    if (!(e instanceof BotApiError) || e.code !== 400) {
+      console.error('envio recusado:', e instanceof BotApiError ? `${e.code} ${JSON.stringify(e.parameters ?? {})}` : e);
+      throw e;
+    }
     console.error('envio em HTML recusado, reenviando como texto puro:', e);
     return await enviarPuro();
   }

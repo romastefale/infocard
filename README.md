@@ -7,13 +7,13 @@ Bot de Telegram no Telegram Serverless. Você envia um `@username` ou um ID num�
 - **ID numérico:** consulta o `getChat` do Bot API. Se o Bot API devolver dados, o bot mostra tipo, ID, nome ou título, username, bio ou descrição e se há foto. Se o Bot API não conhecer o ID, no privado o bot segue o mesmo caminho do username: dispara a busca por MTProto, que consulta o ID direto no Telegram (usuário, canal ou supergrupo).
 - **@username de canal, supergrupo ou bot:** igual ao ID, pelo `getChat`.
 - **@username de usuário comum:** o servidor do Bot API não resolve (`400 chat not found`). No privado, o bot responde "Buscando…" e dispara `.github/workflows/resolver.yml`, que resolve o username por MTProto (Telethon) e responde neste chat em dezenas de segundos. No inline isso não roda: o bot avisa para usar o privado. O relatório traz tudo o que o MTProto devolver para o tipo: de usuário (bio, aniversário, chats em comum, canal pessoal, dados comerciais, restrições, idioma, foto de perfil enviada junto), de bot (descrição, comandos, usuários ativos) e de canal ou supergrupo (descrição, membros, administradores, chat vinculado, modo lento, boosts). O que o Telegram não devolver por privacidade não aparece.
-- **Limite das buscas MTProto:** 1 por chat a cada 60 s e 6 no total a cada 60 s, controlados na tabela `disparos`. Os valores são escolhas conservadoras minhas, e não limites do Telegram; ficam em `tgcloud/lib/limite.js`.
+- **Limite das buscas MTProto:** 1 por chat a cada 60 s e 6 no total a cada 60 s, controlados na tabela `disparos` por uma única instrução SQL (a checagem e a gravação são atômicas). Se o controle estiver indisponível, o bot não dispara e avisa. Se o disparo falhar, a reserva é desfeita. Os valores são escolhas conservadoras minhas, e não limites do Telegram; ficam em `tgcloud/lib/limite.js`.
 - **Sem GitHub:** o botão "Escolher usuário" (aparece nas respostas de falha), uma mensagem encaminhada da pessoa e um contato compartilhado também rendem o ID, pelo próprio Bot API. Funcionam mesmo se a busca por MTProto estiver indisponível.
 - Grupos são ignorados.
 
 ## Publicação
 
-Cada push na `main` que altera `tgcloud/**`, `tgcloud.jsonc`, `package.json`, `package-lock.json` ou `deploy.yml` roda `.github/workflows/deploy.yml`: `fetch`, `status`, `push`, `migrate --safe` e `webhook`. O `push` espelha a pasta, então edições feitas no @BotFather são sobrescritas.
+Cada push na `main` que altera `tgcloud/**`, `tgcloud.jsonc`, `package.json`, `package-lock.json` ou `deploy.yml` roda `.github/workflows/deploy.yml`: `fetch`, `status`, `migrate --safe --local`, `push` e `webhook`. A migração vem antes do `push` para a tabela já existir quando o código novo chegar; ela só aplica mudanças aditivas. O `push` espelha a pasta, então edições feitas no @BotFather são sobrescritas.
 
 ## Secrets do repositório
 

@@ -52,6 +52,14 @@ Só `.js` dentro de `tgcloud/` vai para a nuvem.
 - O `push` recusa módulo vazio: `Error: Module code is empty` (observado ao esvaziar o `schema.js`).
 - O link `tg://user?id=` só funciona dentro de link embutido ou botão, nunca em texto puro. Fonte: documentação do Bot API.
 
+## Política de falhas (baseada no TDLib, `NetQueryDelayer.cpp`)
+
+- Só se repete leitura idempotente (`getChat`), uma vez, em falha de rede ou 5xx. Escrita e disparo (`sendMessage`, disparo do workflow) nunca se repetem: o TDLib avisa que reenviar sem espera é perigoso, e um disparo duplicado inicia dois workflows.
+- 4xx, como 400, não se repete: é erro final do cliente.
+- O runtime não tem `setTimeout`, então não há espera progressiva. `retry_after` do Telegram é mostrado ao usuário, e o `resolver.py` espera um `FloodWait` de até 120 s.
+- A entidade de um `resolveUsername` é escolhida pelo `peer` do resultado, como o TDLib faz, e não pela posição na lista.
+- O limite das buscas é uma única instrução `INSERT … SELECT … WHERE` (atômica no SQLite); o resultado é lido por `rowsAffected`.
+
 ## Comandos
 
 ```
