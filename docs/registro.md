@@ -34,8 +34,8 @@ Um teste confirma apenas o cenário que foi exercitado. Um deploy concluído dem
 | Comportamento | Onde | Já observado | Falta |
 |---|---|---|---|
 | Disparo do workflow pelo bot e resposta "Buscando…" | `consulta.js`, `despacho.js` | o token atual passa na validação do deploy | um disparo real feito pelo bot (204) e a resposta chegando |
-| Relatório MTProto completo (bio, aniversário, dados comerciais, bot, canal) e envio da foto | `scripts/resolver.py` | só o `resolveUsername` básico rodou | `getFullUser`, `getFullChannel`, `download_profile_photo` e o envio |
-| Consulta de ID por MTProto | `resolver.py` (`entidade_por_id`) | nada | qualquer execução |
+| Relatório MTProto completo (bio, aniversário, dados comerciais, bot, canal) e envio da foto | `scripts/resolver.py` | usuário e bot lidos, foto enviada (seção 8) | `getFullChannel` com sucesso, e um usuário com bio, aniversário ou dados comerciais |
+| Consulta de ID por MTProto | `resolver.py` (`entidade_por_id`) | ID 777000 resolvido (seção 8) | ID de usuário comum, de canal e de supergrupo |
 | Botão "Escolher usuário", leitura de mensagem encaminhada e de contato | `envio.js`, `message.js`, `relatorio.js` | nada | uma execução real de cada |
 | Limite por chat e total, em uma instrução SQL | `limite.js` | a tabela existe | uma execução, inclusive concorrente |
 | Reserva desfeita se o disparo falha; bloqueio se o controle falha | `consulta.js` | nada | provocar as duas falhas |
@@ -47,7 +47,7 @@ As correções do commit `4f634de` foram feitas em lote (oito alterações junta
 
 ## 3. Hipóteses
 
-- O MTProto resolve o ID de quem nunca falou com o bot (`access_hash` 0). Base: o TDLib monta `inputUser(id, 0)` e `inputChannel(id, 0)` para bots (`UserManager.cpp`, `ChatManager.cpp`). Falta confirmar que o servidor aceita. Como confirmar: consultar o ID de alguém que nunca falou com o bot.
+- O MTProto resolve o ID de um usuário comum que nunca falou com o bot (`access_hash` 0). Resolveu o ID 777000 (seção 8), conta de serviço; falta um usuário comum. Base: o TDLib monta `inputUser(id, 0)` e `inputChannel(id, 0)` para bots (`UserManager.cpp`, `ChatManager.cpp`). Falta confirmar que o servidor aceita. Como confirmar: consultar o ID de alguém que nunca falou com o bot.
 - `tigrao` é um username adicional da conta. Base: o campo `username` principal veio vazio. Como confirmar: ler os `usernames` ativos no relatório.
 - O Telethon 1.45.0 expõe os campos lidos em `resolver.py`. A leitura é defensiva, então um campo ausente apenas não aparece.
 - Reutilizar a sessão MTProto entre buscas poderia causar `AuthKeyDuplicatedError` com execuções simultâneas (aviso da documentação do Telethon). Não foi testado.
@@ -110,3 +110,17 @@ Conferido por leitura do código atual; nenhum item foi exercitado ao vivo.
 | 13 | Aceite do disparo como conclusão | Corrigido: o texto diz que a busca foi pedida e que a resposta só chega se ela concluir | IMPLEMENTADO |
 | 14 | Reserva fica após falha | Corrigido: a reserva é liberada se o disparo falha | IMPLEMENTADO |
 | 15 | Publicar antes de migrar | Corrigido: `migrate --safe --local` roda antes do `push` | VERIFICADO só para o caso sem mudança de schema (run 41332145298) |
+
+## 8. Execuções do resolver em 2026-11-01 (19:05–19:08 UTC)
+
+Disparadas por mim com `workflow_dispatch`, com resposta para o chat do responsável. Alvos: contas oficiais ou públicas. Logs só têm nomes de campos, não valores.
+
+| Comportamento | Condições | Esperado | Observado | Evidência | Situação |
+|---|---|---|---|---|---|
+| Consulta por ID de usuário que o bot nunca atendeu | ID `777000` (conta de serviço do Telegram) | resolver com `access_hash` 0 | resolveu como usuário; foto e mensagem enviadas; job verde | run 41339952480 | Confirmado para esse ID. A conta é especial (flags `verified` e `support`); **não** prova o caso de um usuário comum |
+| Username de bot | `@BotFather` | relatório completo | tipo `bot`; campos de bot e `about` lidos; foto e mensagem enviadas; job verde | run 41340054405 | Confirmado |
+| `getFullUser` e `download_profile_photo` | os dois itens acima | campos do perfil completo e foto | perfil completo lido; foto enviada nos dois casos | runs 41339952480 e 41340054405 | Confirmado nesses dois casos |
+| Username de canal sob limite do Telegram | `@telegram`, depois de duas buscas no mesmo minuto | resultado ou aviso | `FloodWaitError 129`, acima do `ESPERA_MAXIMA` de 120 s; o script enviou o aviso ao chat e saiu com erro (job vermelho); o passo de aviso final não reenviou | run 41340057109 | Confirmado: a falha chegou a quem consultou. O motivo do limite (três buscas em ~1 min) é hipótese |
+| Username comum | `@enriquecimentos`, run que **não** foi disparada por mim | relatório | tipo `usuário`; só `first_name`, `id`, `username`, `status` na entidade; sem foto; mensagem enviada; job verde | run 41340128699 | Confirmado para o resolver. A origem do disparo não foi verificada; pode ter vindo do bot ou de um disparo manual |
+
+O que isto não prova: o bot disparar o workflow sozinho (nenhum log do bot foi lido), o botão "Escolher usuário", mensagem encaminhada, contato, o limite de 1 busca por chat e a liberação da reserva.
