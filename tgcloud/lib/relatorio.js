@@ -69,8 +69,8 @@ export function relatorioInvalido(texto) {
 export function relatorioBuscando(entrada) {
   const linhas = [
     '<b>Buscando…</b>',
-    `Entrada: ${esc(entrada.rotulo)} (username)`,
-    'O Bot API não resolve esse @username. Iniciei a busca por MTProto; a resposta chega neste chat em instantes.',
+    `Entrada: ${esc(entrada.rotulo)} (${entrada.tipo === 'id' ? 'ID' : 'username'})`,
+    'O Bot API não resolveu essa entrada. Iniciei a busca por MTProto; a resposta chega neste chat em instantes.',
   ];
   return { titulo: recorte(`Buscando ${entrada.rotulo}`, 100), html: linhas.join('\n') };
 }

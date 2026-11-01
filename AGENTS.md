@@ -23,7 +23,7 @@ Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no p
 | `tgcloud/lib/` | Módulos compartilhados. |
 | `tgcloud/schema.js` | Schema do banco. Tabela `disparos` (controle de limite das buscas MTProto). A plataforma recusa módulo vazio. |
 | `.github/workflows/deploy.yml` | Publica a cada push em `main` que altera `tgcloud/**` e arquivos de configuração. |
-| `.github/workflows/resolver.yml` | Resolve `@username` por MTProto com `scripts/resolver.py` e responde ao chat pela Bot API. O bot o dispara em `lib/despacho.js`. |
+| `.github/workflows/resolver.yml` | Resolve `@username` ou ID por MTProto com `scripts/resolver.py` e responde ao chat pela Bot API. O bot o dispara em `lib/despacho.js`. |
 | `tgcloud/lib/segredos.js` | No git só tem valor vazio. O `deploy.yml` o sobrescreve no runner com o secret `GH_DISPATCH_TOKEN` antes do `push`. Nunca commitar o token. |
 | `.tgcloud/` | Estado do CLI. Nunca editar nem ler. |
 
@@ -42,6 +42,7 @@ Só `.js` dentro de `tgcloud/` vai para a nuvem.
 ## Fatos observados
 
 - `getChat` com `@username` só resolve supergrupo, canal e bot. Usuário comum devolve `400 chat not found`. Fonte: código do servidor do Bot API (`Client.cpp`, `TdOnCheckChatCallback`) e execução na plataforma.
+- Fonte: o código do TDLib (`romastefale/td`, `td/telegram/UserManager.cpp` `get_input_user` e `td/telegram/ChatManager.cpp` `get_input_channel`) monta `inputUser(id, 0)` e `inputChannel(id, 0)` para bots quando o usuário ou canal é desconhecido, e consulta o servidor com `users.getUsers` e `users.getFullUser`. O `chat not found` do Bot API para ID desconhecido vem do servidor do Bot API. Por isso o `resolver.py` também consulta IDs por MTProto. Não foi comprovado ao vivo que o servidor aceita `access_hash` 0 para todo usuário.
 - Na plataforma, o `fetch` falha para `t.me`, `telegram.me` e `telegram.dog`, e responde para `telegram.org`, `api.telegram.org` e `example.com`.
 - O `contacts.resolveUsername` por MTProto com o token do bot, rodando no Actions com Telethon 1.45.0, resolveu um username de usuário comum para o ID.
 - Runtime do Serverless (observado em execução): existem `crypto`, `crypto.subtle`, `crypto.getRandomValues`, `BigInt`, `TextEncoder`, `TextDecoder`, `WebAssembly` e `DataView`. Não existem `atob`, `btoa`, `URL`, `setTimeout`, `performance` nem `WebSocket`. Medições com `Date.now()` deram 0 ms durante a execução.

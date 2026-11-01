@@ -23,7 +23,7 @@ export async function consultar(texto, contexto) {
   } catch (e) {
     console.error('getChat falhou:', entrada.rotulo, e);
     const falha = falhaDaApi(e);
-    const naoResolvido = entrada.tipo === 'username' && falha.apiErro && falha.code === 400;
+    const naoResolvido = falha.apiErro && falha.code === 400;
     if (!naoResolvido) return relatorioFalha(entrada, falha);
     if (contexto.canal !== 'privado') {
       return relatorioFalha(entrada, falha, ['A busca por MTProto só roda no privado: envie o @username ao bot em uma conversa privada.']);
@@ -36,7 +36,7 @@ export async function consultar(texto, contexto) {
     }
     if (!limite.permitido) return relatorioFalha(entrada, falha, [limite.motivo]);
     try {
-      await comRetentativa(() => dispararBusca(entrada.chat_id.slice(1), contexto.chatId), transitorioGitHub);
+      await comRetentativa(() => dispararBusca(entrada.tipo === 'username' ? entrada.chat_id.slice(1) : String(entrada.chat_id), contexto.chatId), transitorioGitHub);
       return relatorioBuscando(entrada);
     } catch (erroDespacho) {
       console.error('dispararBusca falhou:', erroDespacho);

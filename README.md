@@ -4,7 +4,7 @@ Bot de Telegram no Telegram Serverless. Você envia um `@username` ou um ID num�
 
 ## O que ele lê
 
-- **ID numérico:** consulta o `getChat` do Bot API. Se o Bot API devolver dados, o bot mostra tipo, ID, nome ou título, username, bio ou descrição e se há foto. Se não devolver, mostra o erro recebido.
+- **ID numérico:** consulta o `getChat` do Bot API. Se o Bot API devolver dados, o bot mostra tipo, ID, nome ou título, username, bio ou descrição e se há foto. Se o Bot API não conhecer o ID, no privado o bot segue o mesmo caminho do username: dispara a busca por MTProto, que consulta o ID direto no Telegram (usuário, canal ou supergrupo).
 - **@username de canal, supergrupo ou bot:** igual ao ID, pelo `getChat`.
 - **@username de usuário comum:** o servidor do Bot API não resolve (`400 chat not found`). No privado, o bot responde "Buscando…" e dispara `.github/workflows/resolver.yml`, que resolve o username por MTProto (Telethon) e responde neste chat em dezenas de segundos. No inline isso não roda: o bot avisa para usar o privado. O relatório traz tudo o que o MTProto devolver para o tipo: de usuário (bio, aniversário, chats em comum, canal pessoal, dados comerciais, restrições, idioma, foto de perfil enviada junto), de bot (descrição, comandos, usuários ativos) e de canal ou supergrupo (descrição, membros, administradores, chat vinculado, modo lento, boosts). O que o Telegram não devolver por privacidade não aparece.
 - **Limite das buscas MTProto:** 1 por chat a cada 60 s e 6 no total a cada 60 s, controlados na tabela `disparos`. Os valores são escolhas conservadoras minhas, e não limites do Telegram; ficam em `tgcloud/lib/limite.js`.

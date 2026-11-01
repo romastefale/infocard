@@ -1,10 +1,10 @@
-name: Resolver username (MTProto)
+name: Resolver username ou ID (MTProto)
 
 on:
   workflow_dispatch:
     inputs:
-      username:
-        description: "Username a resolver (sem @)"
+      alvo:
+        description: "Username (sem @) ou ID numérico a resolver"
         required: true
       chat:
         description: "ID do chat que recebe a resposta (vazio: só mostra no log)"
@@ -22,7 +22,7 @@ jobs:
       API_ID: ${{ secrets.API_ID }}
       API_HASH: ${{ secrets.API_HASH }}
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-      ALVO: ${{ inputs.username }}
+      ALVO: ${{ inputs.alvo }}
       CHAT_ID: ${{ inputs.chat }}
     steps:
       - uses: actions/checkout@v4
