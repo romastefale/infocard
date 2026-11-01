@@ -31,6 +31,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx --no-install tgcloud fetch
+      - name: Página pública t.me
+        continue-on-error: true
+        run: |
+          node scripts/diag-probe.mjs "$TEXTO" telegram zzzz_no_user_918273
       - name: handlers/message
         continue-on-error: true
         run: |
