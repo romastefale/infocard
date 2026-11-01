@@ -127,3 +127,7 @@ Salvo onde está indicado, disparadas por mim com `workflow_dispatch`, com respo
 | `@telegram` (canal) depois de ajustar a espera | mesmo alvo que antes deu `FloodWait` | relatório de canal | resolveu como canal; `getFullChannel` e foto; sem `FloodWait` desta vez | run 41340514301 | Confirmado para o canal. O caminho de espera nunca foi exercitado: o limite não voltou a ocorrer |
 
 O que isto não prova: o bot disparar o workflow sozinho (nenhum log do bot foi lido), o botão "Escolher usuário", mensagem encaminhada, contato, o limite de 1 busca por chat e a liberação da reserva.
+
+## 9. Ajuste do aviso "Buscando…" para IDs (2026-11-01)
+
+O aviso prometia a busca por MTProto também para ID, e o único ID de usuário comum testado falhou duas vezes (seção 8). Mudança: para entrada numérica, o aviso informa que nos testes feitos a consulta por ID de usuário comum não devolveu dados e já mostra o botão "Escolher usuário". O disparo continua, porque o ID 777000 foi resolvido e canais/supergrupos por ID não foram testados. Situação: IMPLEMENTADO; a resposta real do bot a um ID ainda não foi observada.

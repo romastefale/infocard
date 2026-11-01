@@ -67,12 +67,16 @@ export function relatorioInvalido(texto) {
 }
 
 export function relatorioBuscando(entrada) {
+  const ehId = entrada.tipo === 'id';
   const linhas = [
     '<b>Buscando…</b>',
-    `Entrada: ${esc(entrada.rotulo)} (${entrada.tipo === 'id' ? 'ID' : 'username'})`,
+    `Entrada: ${esc(entrada.rotulo)} (${ehId ? 'ID' : 'username'})`,
     'O Bot API não resolveu essa entrada. Pedi a busca por MTProto; se ela concluir, a resposta chega neste chat. Se não chegar, a busca falhou ou ainda está na fila.',
   ];
-  return { titulo: recorte(`Buscando ${entrada.rotulo}`, 100), html: linhas.join('\n') };
+  if (ehId) {
+    linhas.push('Nos testes feitos, a consulta por ID de um usuário comum não devolveu dados. Se a busca falhar, o motivo chega aqui. Para obter o ID de alguém sem depender dela, use o botão abaixo, encaminhe uma mensagem da pessoa ou envie o @username.');
+  }
+  return { titulo: recorte(`Buscando ${entrada.rotulo}`, 100), html: linhas.join('\n'), teclado: ehId };
 }
 
 function blocoUsuario(u) {
