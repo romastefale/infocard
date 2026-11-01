@@ -30,9 +30,36 @@ export function relatorioLeitura(chat) {
   if (chat.bio) linhas.push(`Bio: ${esc(recorte(chat.bio, 1000))}`);
   if (chat.description) linhas.push(`Descrição: ${esc(recorte(chat.description, 1000))}`);
   linhas.push(`Foto de perfil: ${chat.photo ? 'sim' : 'não retornada'}`);
+  if (chat.birthdate) {
+    const { day, month, year } = chat.birthdate;
+    linhas.push(`Aniversário: ${esc(day)}/${esc(month)}${year ? `/${esc(year)}` : ''}`);
+  }
+  if (chat.business_intro) {
+    const { title, message } = chat.business_intro;
+    if (title) linhas.push(`Apresentação comercial, título: ${esc(recorte(title, 200))}`);
+    if (message) linhas.push(`Apresentação comercial, mensagem: ${esc(recorte(message, 500))}`);
+  }
+  if (chat.business_location && chat.business_location.address) {
+    linhas.push(`Endereço comercial: ${esc(recorte(chat.business_location.address, 300))}`);
+  }
+  if (chat.personal_chat) {
+    const pessoal = chat.personal_chat;
+    linhas.push(`Canal pessoal: ${esc(recorte(pessoal.title ?? '', 200))}${pessoal.username ? ` (@${esc(pessoal.username)})` : ''} <code>${esc(pessoal.id)}</code>`);
+  }
+  if (chat.location && chat.location.address) linhas.push(`Localização: ${esc(recorte(chat.location.address, 300))}`);
+  if (chat.is_forum) linhas.push('Fórum: sim');
+  if (chat.linked_chat_id) linhas.push(`Chat vinculado: <code>${esc(chat.linked_chat_id)}</code>`);
+  if (chat.slow_mode_delay) linhas.push(`Modo lento: ${esc(chat.slow_mode_delay)} s`);
+  if (chat.message_auto_delete_time) linhas.push(`Apagar mensagens após: ${esc(chat.message_auto_delete_time)} s`);
+  if (chat.join_by_request) linhas.push('Entrada por pedido: sim');
+  if (chat.has_hidden_members) linhas.push('Membros ocultos: sim');
+  if (chat.has_protected_content) linhas.push('Conteúdo protegido: sim');
+  if (chat.invite_link) linhas.push(`Link de convite: ${esc(chat.invite_link)}`);
   if (chat.type === 'private') {
     linhas.push(`<a href="tg://user?id=${esc(chat.id)}">Abrir perfil</a>`);
-    linhas.push('O link só é garantido se a pessoa já falou com o bot em privado (regra do Telegram).');
+    linhas.push(chat.has_private_forwards
+      ? 'As configurações de privacidade da pessoa permitem o link tg://user?id= só em chats com ela.'
+      : 'O link tg://user?id= funciona se as configurações de privacidade da pessoa permitirem.');
   }
   const rotulo = nome || chat.title || `ID ${chat.id}`;
   const titulo = recorte(chat.username ? `${rotulo} (@${chat.username})` : rotulo, 100);
@@ -115,4 +142,14 @@ export function relatorioContato(contato) {
     return { titulo: 'Contato', html: '<b>Lido do contato (Bot API)</b>\nEsse contato não tem conta do Telegram associada.' };
   }
   return { titulo: 'Contato', html: ['<b>Lido do contato (Bot API)</b>', ...blocoUsuario(contato)].join('\n') };
+}
+
+export function relatorioMencionados(usuarios) {
+  const blocos = usuarios.map((u) => blocoUsuario(u).join('\n'));
+  return { titulo: 'Usuário mencionado', html: ['<b>Lido da menção na mensagem (Bot API)</b>', ...blocos].join('\n\n') };
+}
+
+export function relatorioErro(erro) {
+  const linhas = ['<b>Não foi possível responder</b>', `Erro: ${esc(erro?.name ?? 'Error')}: ${esc(recorte(erro?.message ?? erro, 300))}`];
+  return { titulo: 'Erro', html: linhas.join('\n'), teclado: true };
 }

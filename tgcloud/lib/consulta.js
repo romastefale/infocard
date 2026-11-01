@@ -25,7 +25,10 @@ export async function consultar(texto, contexto) {
     const naoResolvido = falha.apiErro && falha.code === 400;
     if (!naoResolvido) return relatorioFalha(entrada, falha);
     if (entrada.tipo === 'id') {
-      return relatorioFalha(entrada, falha, ['O Bot API não conhece esse ID. Para obter o ID de um usuário, use o botão abaixo, encaminhe uma mensagem da pessoa ou envie o @username.']);
+      const orientacao = contexto.canal === 'privado'
+        ? 'O Bot API não conhece esse ID. Para obter dados de um usuário, use o botão abaixo, encaminhe uma mensagem da pessoa ou envie o @username.'
+        : 'O Bot API não conhece esse ID. Abra uma conversa privada com o bot: lá é possível escolher o usuário, encaminhar uma mensagem da pessoa ou enviar o @username.';
+      return relatorioFalha(entrada, falha, [orientacao]);
     }
     if (contexto.canal !== 'privado') {
       return relatorioFalha(entrada, falha, ['A busca por MTProto só roda no privado: envie o @username ao bot em uma conversa privada.']);

@@ -133,3 +133,17 @@ O que isto não prova: o bot disparar o workflow sozinho (nenhum log do bot foi 
 Base: (a) no `td`, um bot monta `inputUser(id, 0)` para usuário desconhecido (`UserManager.cpp:5332-5335`), mas o código não diz que o servidor aceita; (b) o 777000 é caso fixo do TDLib (`UserManager.cpp:5143-5149`); (c) o único ID de usuário comum testado falhou nas duas chamadas, `users.getUsers` e `users.getFullUser` (seção 8); (d) a documentação do `getChat` cobre ID ou username de supergrupo ou canal.
 
 Mudança: para entrada numérica que o `getChat` não resolve, o bot responde na hora com o erro da API e indica o botão "Escolher usuário", a mensagem encaminhada e o `@username`, sem reservar limite nem disparar o workflow. Só `@username` dispara a busca MTProto. Canais e supergrupos por ID não foram testados e também deixam de disparar. Situação: IMPLEMENTADO; a resposta real do bot a um ID não foi observada. O caminho por ID do `resolver.py` continua acessível só por disparo manual do workflow.
+
+## 10. Revisão do código contra a documentação do Bot API (2026-11-01)
+
+Fonte: cópia de 17/10/2026 da documentação do Bot API (`ChatFullInfo`, `MessageEntity`, `tg://user?id=`).
+
+| Item | Antes | Depois | Situação |
+|---|---|---|---|
+| Nota sobre o link `tg://user?id=` | afirmava que só funciona se a pessoa já falou com o bot, sem fonte | a documentação diz que o link funciona "se permitido pelas configurações de privacidade"; `has_private_forwards` indica que só vale em chats com a pessoa; o texto passou a dizer isso | IMPLEMENTADO |
+| Campos do `getChat` | tipo, ID, nome, título, username, usernames ativos, bio, descrição, foto | também aniversário, apresentação e endereço comerciais, canal pessoal, localização, fórum, chat vinculado, modo lento, apagar mensagens, entrada por pedido, membros ocultos, conteúdo protegido, link de convite, todos campos documentados do `ChatFullInfo`, mostrados só quando vêm preenchidos | IMPLEMENTADO |
+| Menção com `text_mention` | ignorada | a mensagem com menção a um usuário sem username traz o `user` (documentação de `MessageEntity`); o bot mostra ID, nome e username dele | IMPLEMENTADO |
+| ID desconhecido no modo inline | pedia o "botão abaixo", que não existe no inline | orienta a abrir o privado com o bot | IMPLEMENTADO |
+| Erro inesperado nos handlers | sem resposta ao usuário | responde com o nome e a mensagem do erro | IMPLEMENTADO |
+
+Nenhum dos itens foi exercitado ao vivo.

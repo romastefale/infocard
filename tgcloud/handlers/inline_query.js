@@ -1,6 +1,7 @@
 import { api } from 'sdk';
 import { consultar } from '../lib/consulta.js';
 import { responderInline } from '../lib/envio.js';
+import { relatorioErro } from '../lib/relatorio.js';
 
 export default async function (query) {
   const texto = (query.query || '').trim();
@@ -8,6 +9,12 @@ export default async function (query) {
     await api.answerInlineQuery({ inline_query_id: query.id, results: [], cache_time: 0, is_personal: true });
     return;
   }
-  const { titulo, html } = await consultar(texto, { canal: 'inline' });
-  await responderInline(query.id, titulo, html);
+  let resposta;
+  try {
+    resposta = await consultar(texto, { canal: 'inline' });
+  } catch (e) {
+    console.error('falha ao montar a resposta inline:', e);
+    resposta = relatorioErro(e);
+  }
+  await responderInline(query.id, resposta.titulo, resposta.html);
 }
