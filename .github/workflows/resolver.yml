@@ -1,0 +1,45 @@
+name: Resolver username (MTProto)
+
+on:
+  workflow_dispatch:
+    inputs:
+      username:
+        description: "Username a resolver (sem @)"
+        required: true
+      chat:
+        description: "ID do chat que recebe a resposta (vazio: só mostra no log)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  resolver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      API_ID: ${{ secrets.API_ID }}
+      API_HASH: ${{ secrets.API_HASH }}
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      ALVO: ${{ inputs.username }}
+      CHAT_ID: ${{ inputs.chat }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar secrets
+        run: |
+          faltando=""
+          for nome in API_ID API_HASH BOT_TOKEN; do
+            if [ -z "${!nome}" ]; then faltando="$faltando $nome"; fi
+          done
+          if [ -n "$faltando" ]; then
+            echo "::error::Secrets ausentes:$faltando"
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/resolver-requirements.txt
+      - run: pip install -r scripts/resolver-requirements.txt
+      - run: python scripts/resolver.py
