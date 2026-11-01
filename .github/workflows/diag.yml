@@ -1,0 +1,29 @@
+name: Diagnóstico do disparo ao GitHub
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
+      GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx --no-install tgcloud fetch
+      - name: Sondar o GitHub de dentro da plataforma
+        run: |
+          node -e "require('fs').writeFileSync('tgcloud/lib/segredos.js', 'export const GH_DISPATCH_TOKEN = ' + JSON.stringify(process.env.GH_DISPATCH_TOKEN || '') + ';\n')"
+          mkdir -p tgcloud/endpoints
+          cp scripts/probe-github.js tgcloud/endpoints/probe.js
+          npx --no-install tgcloud run endpoints/probe '{}'
