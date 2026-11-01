@@ -21,7 +21,7 @@ Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no p
 |---|---|
 | `tgcloud/handlers/` | Um arquivo por tipo de update: `message.js`, `inline_query.js`. Sem subpastas. |
 | `tgcloud/lib/` | Módulos compartilhados. |
-| `tgcloud/schema.js` | Schema do banco. Está vazio. |
+| `tgcloud/schema.js` | Schema do banco. Sem tabelas; só o import do scaffold, porque a plataforma recusa módulo vazio. |
 | `.github/workflows/deploy.yml` | Publica a cada push em `main` que altera `tgcloud/**` e arquivos de configuração. |
 | `.github/workflows/resolver.yml` | Resolve `@username` por MTProto com `scripts/resolver.py`. Não está ligado ao bot. |
 | `.tgcloud/` | Estado do CLI. Nunca editar nem ler. |
@@ -43,6 +43,7 @@ Só `.js` dentro de `tgcloud/` vai para a nuvem.
 - `getChat` com `@username` só resolve supergrupo, canal e bot. Usuário comum devolve `400 chat not found`. Fonte: código do servidor do Bot API (`Client.cpp`, `TdOnCheckChatCallback`) e execução na plataforma.
 - Na plataforma, o `fetch` falha para `t.me`, `telegram.me` e `telegram.dog`, e responde para `telegram.org`, `api.telegram.org` e `example.com`.
 - O `contacts.resolveUsername` por MTProto com o token do bot, rodando no Actions com Telethon 1.45.0, resolveu um username de usuário comum para o ID.
+- O `push` recusa módulo vazio: `Error: Module code is empty` (observado ao esvaziar o `schema.js`).
 - O link `tg://user?id=` só funciona dentro de link embutido ou botão, nunca em texto puro. Fonte: documentação do Bot API.
 
 ## Comandos
