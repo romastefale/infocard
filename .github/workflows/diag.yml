@@ -7,6 +7,10 @@ on:
         description: "Texto a enviar aos handlers"
         required: true
         default: "@telegram"
+      chat:
+        description: "ID do chat de destino do handlers/message"
+        required: true
+        default: "1"
 
 permissions:
   contents: read
@@ -18,6 +22,7 @@ jobs:
     env:
       TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
       TEXTO: ${{ inputs.texto }}
+      CHAT: ${{ inputs.chat }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,7 +34,7 @@ jobs:
       - name: handlers/message
         continue-on-error: true
         run: |
-          npx --no-install tgcloud run handlers/message "{ chat: { id: 1, type: 'private' }, text: '$TEXTO' }"
+          npx --no-install tgcloud run handlers/message "{ chat: { id: $CHAT, type: 'private' }, text: '$TEXTO' }"
       - name: handlers/inline_query
         continue-on-error: true
         run: |
