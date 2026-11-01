@@ -22,6 +22,7 @@ Um teste confirma apenas o cenário que foi exercitado. Um deploy concluído dem
 | O mesmo pacote a partir do runner do Actions | 2026-11-01 | `resPQ` | IPs por HTTP: `200` com `resPQ` e nonce igual. `https://venus.web.telegram.org/api`: `403` | run 41326518485 | Confirmado |
 | `contacts.resolveUsername` com o token do bot | Telethon 1.45.0 no Actions; `tigrao`; 2026-11-01 | ID do usuário | resolveu para o ID `8921622168`; `username` principal vazio | run 41325053290 | Confirmado para esse caso. A conta já tinha falado com o bot, então **não** prova o caso de quem nunca falou |
 | `GH_DISPATCH_TOKEN` de dentro do Serverless | `tgcloud run`; 2026-11-01 | ler e disparar | lê o workflow (`200`); o disparo devolve `403 Resource not accessible by personal access token` | runs 41330709877, 41330779192 e 41332393101 | Confirmado: o token atual não pode disparar |
+| Permissão do `GH_DISPATCH_TOKEN` depois da troca | deploy manual (`workflow_dispatch`) nº 18, 2026-11-01 17:53 UTC, mesmo código do nº 17 | passo "Validar a permissão…" verde | a execução inteira concluiu com sucesso, incluindo o passo de validação; o nº 17, 5 minutos antes, falhou nesse passo | runs 41333359017 (falha) e 41333747195 (sucesso) | Confirmado: o token agora tem permissão de disparo. Não prova que o bot dispara e que o job resolve |
 | `push` com módulo vazio | `schema.js` com 0 bytes | publicar | `Error: Module code is empty`; nada foi publicado | run 41325623276 | Confirmado |
 | Migração aditiva | tabela `disparos` nova | criar a tabela | `Migration complete. Applied: 1` | run 41329731536 | Confirmado |
 | `migrate --safe --local` antes do `push` | sem mudança de schema; 2026-11-01 | sem erro | `No schema changes`, depois o `push` normal | run 41332145298 | Confirmado só para o caso sem mudança de schema |
@@ -32,7 +33,7 @@ Um teste confirma apenas o cenário que foi exercitado. Um deploy concluído dem
 
 | Comportamento | Onde | Já observado | Falta |
 |---|---|---|---|
-| Disparo do workflow pelo bot e resposta "Buscando…" | `consulta.js`, `despacho.js` | o disparo dá 403 com o token atual | um disparo aceito (204) e a resposta chegando |
+| Disparo do workflow pelo bot e resposta "Buscando…" | `consulta.js`, `despacho.js` | o token atual passa na validação do deploy | um disparo real feito pelo bot (204) e a resposta chegando |
 | Relatório MTProto completo (bio, aniversário, dados comerciais, bot, canal) e envio da foto | `scripts/resolver.py` | só o `resolveUsername` básico rodou | `getFullUser`, `getFullChannel`, `download_profile_photo` e o envio |
 | Consulta de ID por MTProto | `resolver.py` (`entidade_por_id`) | nada | qualquer execução |
 | Botão "Escolher usuário", leitura de mensagem encaminhada e de contato | `envio.js`, `message.js`, `relatorio.js` | nada | uma execução real de cada |
@@ -84,7 +85,7 @@ As correções do commit `4f634de` foram feitas em lote (oito alterações junta
 | Busca por comentários em `tgcloud/` e `scripts/` | nenhum; as duas ocorrências de `//` são parte de `tg://` | só texto |
 | Releitura de `consulta.js`, `despacho.js`, `limite.js`, `message.js`, `inline_query.js` | nenhum defeito novo encontrado | releitura por quem escreveu o código; não substitui execução |
 
-Pendente por depender de ação do responsável: o `GH_DISPATCH_TOKEN` com Actions: Read and write. Sem ele, a seção 2 não avança e as hipóteses da seção 3 continuam abertas. Depois do deploy com o passo de validação verde, o próximo passo é enviar o `@username` e o ID de alguém que nunca usou o bot e anotar aqui o resultado observado.
+Pendente: o token já passa na validação do deploy (seção 1, run 41333747195). Falta exercitar o bot: enviar o `@username` e o ID de alguém que nunca usou o bot e anotar aqui o resultado observado.
 
 Os itens corrigidos em lote no commit `4f634de` não têm verificação individual; o registro os mantém na seção 2.
 
