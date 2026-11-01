@@ -118,7 +118,7 @@ Salvo onde está indicado, disparadas por mim com `workflow_dispatch`, com respo
 
 | Comportamento | Condições | Esperado | Observado | Evidência | Situação |
 |---|---|---|---|---|---|
-| Consulta por ID de usuário que o bot nunca atendeu | ID `777000` (conta de serviço do Telegram) | resolver com `access_hash` 0 | resolveu como usuário; foto e mensagem enviadas; job verde | run 41339952480 | Confirmado para esse ID. A conta é especial (flags `verified` e `support`); **não** prova o caso de um usuário comum |
+| Consulta por ID `777000` | ID `777000` (conta de serviço do Telegram) | resolver pelo ID | resolveu como usuário; foto e mensagem enviadas; job verde | run 41339952480 | Confirmado só para essa conta. O TDLib trata o 777000 como usuário conhecido, fixo no código, com hash embutido (`td/telegram/UserManager.cpp:5143-5149`); **não** é evidência para outros usuários |
 | Username de bot | `@BotFather` | relatório completo | tipo `bot`; campos de bot e `about` lidos; foto e mensagem enviadas; job verde | run 41340054405 | Confirmado |
 | `getFullUser` e `download_profile_photo` | os dois itens acima | campos do perfil completo e foto | perfil completo lido; foto enviada nos dois casos | runs 41339952480 e 41340054405 | Confirmado nesses dois casos |
 | Username de canal sob limite do Telegram | `@telegram`, depois de duas buscas no mesmo minuto | resultado ou aviso | `FloodWaitError 129`, acima do `ESPERA_MAXIMA` de 120 s; o script enviou o aviso ao chat e saiu com erro (job vermelho); o passo de aviso final não reenviou | run 41340057109 | Confirmado: a falha chegou a quem consultou. O motivo do limite (três buscas em ~1 min) é hipótese |
@@ -128,6 +128,8 @@ Salvo onde está indicado, disparadas por mim com `workflow_dispatch`, com respo
 
 O que isto não prova: o bot disparar o workflow sozinho (nenhum log do bot foi lido), o botão "Escolher usuário", mensagem encaminhada, contato, o limite de 1 busca por chat e a liberação da reserva.
 
-## 9. Ajuste do aviso "Buscando…" para IDs (2026-11-01)
+## 9. IDs numéricos deixam de disparar a busca MTProto (2026-11-01)
 
-O aviso prometia a busca por MTProto também para ID, e o único ID de usuário comum testado falhou duas vezes (seção 8). Mudança: para entrada numérica, o aviso informa que nos testes feitos a consulta por ID de usuário comum não devolveu dados e já mostra o botão "Escolher usuário". O disparo continua, porque o ID 777000 foi resolvido e canais/supergrupos por ID não foram testados. Situação: IMPLEMENTADO; a resposta real do bot a um ID ainda não foi observada.
+Base: (a) no `td`, um bot monta `inputUser(id, 0)` para usuário desconhecido (`UserManager.cpp:5332-5335`), mas o código não diz que o servidor aceita; (b) o 777000 é caso fixo do TDLib (`UserManager.cpp:5143-5149`); (c) o único ID de usuário comum testado falhou nas duas chamadas, `users.getUsers` e `users.getFullUser` (seção 8); (d) a documentação do `getChat` cobre ID ou username de supergrupo ou canal.
+
+Mudança: para entrada numérica que o `getChat` não resolve, o bot responde na hora com o erro da API e indica o botão "Escolher usuário", a mensagem encaminhada e o `@username`, sem reservar limite nem disparar o workflow. Só `@username` dispara a busca MTProto. Canais e supergrupos por ID não foram testados e também deixam de disparar. Situação: IMPLEMENTADO; a resposta real do bot a um ID não foi observada. O caminho por ID do `resolver.py` continua acessível só por disparo manual do workflow.

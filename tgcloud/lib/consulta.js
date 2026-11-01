@@ -24,6 +24,9 @@ export async function consultar(texto, contexto) {
     const falha = falhaDaApi(e);
     const naoResolvido = falha.apiErro && falha.code === 400;
     if (!naoResolvido) return relatorioFalha(entrada, falha);
+    if (entrada.tipo === 'id') {
+      return relatorioFalha(entrada, falha, ['O Bot API não conhece esse ID. Para obter o ID de um usuário, use o botão abaixo, encaminhe uma mensagem da pessoa ou envie o @username.']);
+    }
     if (contexto.canal !== 'privado') {
       return relatorioFalha(entrada, falha, ['A busca por MTProto só roda no privado: envie o @username ao bot em uma conversa privada.']);
     }
@@ -36,7 +39,7 @@ export async function consultar(texto, contexto) {
     }
     if (!reserva.permitido) return relatorioFalha(entrada, falha, [reserva.motivo]);
     try {
-      await dispararBusca(entrada.tipo === 'username' ? entrada.chat_id.slice(1) : String(entrada.chat_id), contexto.chatId);
+      await dispararBusca(entrada.chat_id.slice(1), contexto.chatId);
       return relatorioBuscando(entrada);
     } catch (erroDespacho) {
       console.error('dispararBusca falhou:', erroDespacho);
