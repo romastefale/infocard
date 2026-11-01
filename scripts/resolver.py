@@ -99,7 +99,19 @@ async def entidade_por_id(cliente, numero):
     real, tipo = utils.resolve_id(numero)
     if tipo is PeerUser:
         encontrados = await cliente(GetUsersRequest([InputUser(real, 0)]))
-        return next((u for u in encontrados if isinstance(u, User)), None)
+        usuario = next((u for u in encontrados if isinstance(u, User)), None)
+        if usuario is not None:
+            return usuario
+        try:
+            completo_ = await cliente(GetFullUserRequest(InputUser(real, 0)))
+        except errors.FloodWaitError:
+            raise
+        except errors.RPCError as erro:
+            raise LookupError(f"Consulta por ID sem access_hash: users.getUsers não devolveu o usuário e users.getFullUser respondeu {type(erro).__name__}.") from erro
+        usuario = next((u for u in completo_.users if isinstance(u, User) and u.id == real), None)
+        if usuario is None:
+            raise LookupError("Consulta por ID sem access_hash: users.getUsers e users.getFullUser não devolveram o usuário.")
+        return usuario
     if tipo is PeerChannel:
         resposta = await cliente(GetChannelsRequest([InputChannel(real, 0)]))
         return next((c for c in resposta.chats if isinstance(c, Channel)), None)
