@@ -4,7 +4,7 @@ Orientação para assistentes de IA e pessoas neste repositório. Mantenha curto
 
 ## O que é
 
-Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no privado ou inline, e responde com o que o Bot API devolve. Não tem Mini App, endpoints nem tabelas no banco por enquanto. Detalhes em `README.md`.
+Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no privado ou inline, e responde com o que o Bot API devolve. Não tem Mini App nem endpoints. O banco tem só a tabela `disparos`. Detalhes em `README.md`.
 
 ## Regras do dono
 
@@ -21,7 +21,7 @@ Bot de Telegram no Telegram Serverless. Recebe `@username` ou ID numérico, no p
 |---|---|
 | `tgcloud/handlers/` | Um arquivo por tipo de update: `message.js`, `inline_query.js`. Sem subpastas. |
 | `tgcloud/lib/` | Módulos compartilhados. |
-| `tgcloud/schema.js` | Schema do banco. Sem tabelas; só o import do scaffold, porque a plataforma recusa módulo vazio. |
+| `tgcloud/schema.js` | Schema do banco. Tabela `disparos` (controle de limite das buscas MTProto). A plataforma recusa módulo vazio. |
 | `.github/workflows/deploy.yml` | Publica a cada push em `main` que altera `tgcloud/**` e arquivos de configuração. |
 | `.github/workflows/resolver.yml` | Resolve `@username` por MTProto com `scripts/resolver.py` e responde ao chat pela Bot API. O bot o dispara em `lib/despacho.js`. |
 | `tgcloud/lib/segredos.js` | No git só tem valor vazio. O `deploy.yml` o sobrescreve no runner com o secret `GH_DISPATCH_TOKEN` antes do `push`. Nunca commitar o token. |
