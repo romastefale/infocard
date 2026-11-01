@@ -6,7 +6,7 @@ Bot de Telegram no Telegram Serverless. Você envia um `@username` ou um ID num�
 
 - **ID numérico e @username de canal, supergrupo ou bot:** consulta o `getChat` do Bot API. Quando o Bot API devolve dados, o bot mostra os que vierem (tipo, ID, nome ou título, username, bio ou descrição, se há foto).
 - **@username de usuário comum:** o Bot API respondeu `400 chat not found` nos casos testados. No privado, o bot tenta uma busca por MTProto (`.github/workflows/resolver.yml`, Telethon) e responde neste chat quando ela termina. No inline essa busca não roda.
-- **ID que o Bot API não conhece:** no privado, o bot tenta a mesma busca por MTProto. Que ela funcione para quem nunca falou com o bot é uma hipótese ainda não confirmada.
+- **ID que o Bot API não conhece:** no privado, o bot tenta `users.getUsers` e depois `users.getFullUser`, sem `access_hash`. Funcionou para o ID 777000 (conta de serviço) e **falhou** para o ID de um usuário comum testado (`UserIdInvalidError`). Para usuário comum, o caminho que funcionou nos testes foi o `@username`.
 - **Sem GitHub:** o botão "Escolher usuário", uma mensagem encaminhada da pessoa e um contato compartilhado trazem o ID pelo próprio Bot API, quando o Telegram o informar. Estão implementados e ainda não foram exercitados.
 - Grupos são ignorados.
 

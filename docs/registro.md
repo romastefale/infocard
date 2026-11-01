@@ -47,7 +47,7 @@ As correções do commit `4f634de` foram feitas em lote (oito alterações junta
 
 ## 3. Hipóteses
 
-- O MTProto resolve o ID de um usuário comum que nunca falou com o bot (`access_hash` 0). Resolveu o ID 777000 (seção 8), conta de serviço; falta um usuário comum. Base: o TDLib monta `inputUser(id, 0)` e `inputChannel(id, 0)` para bots (`UserManager.cpp`, `ChatManager.cpp`). Falta confirmar que o servidor aceita. Como confirmar: consultar o ID de alguém que nunca falou com o bot.
+- O MTProto resolve o ID de um usuário comum que nunca falou com o bot (`access_hash` 0). **Não sustentada pela primeira execução com usuário comum** (seção 8: ID 5249367417, sem dados e `UserIdInvalidError`); resolveu só o 777000, conta de serviço. Base original: o TDLib monta `inputUser(id, 0)` e `inputChannel(id, 0)` para bots (`UserManager.cpp`, `ChatManager.cpp`). Falta confirmar que o servidor aceita. Como confirmar: consultar o ID de alguém que nunca falou com o bot.
 - `tigrao` é um username adicional da conta. Base: o campo `username` principal veio vazio. Como confirmar: ler os `usernames` ativos no relatório.
 - O Telethon 1.45.0 expõe os campos lidos em `resolver.py`. A leitura é defensiva, então um campo ausente apenas não aparece.
 - Reutilizar a sessão MTProto entre buscas poderia causar `AuthKeyDuplicatedError` com execuções simultâneas (aviso da documentação do Telethon). Não foi testado.
@@ -112,9 +112,9 @@ Conferido por leitura do código atual; nenhum item foi exercitado ao vivo.
 | 14 | Reserva fica após falha | Corrigido: a reserva é liberada se o disparo falha | IMPLEMENTADO |
 | 15 | Publicar antes de migrar | Corrigido: `migrate --safe --local` roda antes do `push` | VERIFICADO só para o caso sem mudança de schema (run 41332145298) |
 
-## 8. Execuções do resolver em 2026-11-01 (19:05–19:08 UTC)
+## 8. Execuções do resolver em 2026-11-01 (19:05–19:14 UTC)
 
-Disparadas por mim com `workflow_dispatch`, com resposta para o chat do responsável. Alvos: contas oficiais ou públicas. Logs só têm nomes de campos, não valores.
+Salvo onde está indicado, disparadas por mim com `workflow_dispatch`, com resposta para o chat do responsável. Alvos: contas oficiais ou públicas. Logs só têm nomes de campos, não valores.
 
 | Comportamento | Condições | Esperado | Observado | Evidência | Situação |
 |---|---|---|---|---|---|
@@ -123,5 +123,7 @@ Disparadas por mim com `workflow_dispatch`, com resposta para o chat do respons�
 | `getFullUser` e `download_profile_photo` | os dois itens acima | campos do perfil completo e foto | perfil completo lido; foto enviada nos dois casos | runs 41339952480 e 41340054405 | Confirmado nesses dois casos |
 | Username de canal sob limite do Telegram | `@telegram`, depois de duas buscas no mesmo minuto | resultado ou aviso | `FloodWaitError 129`, acima do `ESPERA_MAXIMA` de 120 s; o script enviou o aviso ao chat e saiu com erro (job vermelho); o passo de aviso final não reenviou | run 41340057109 | Confirmado: a falha chegou a quem consultou. O motivo do limite (três buscas em ~1 min) é hipótese |
 | Username comum | `@enriquecimentos`, run que **não** foi disparada por mim | relatório | tipo `usuário`; só `first_name`, `id`, `username`, `status` na entidade; sem foto; mensagem enviada; job verde | run 41340128699 | Confirmado para o resolver. A origem do disparo não foi verificada; pode ter vindo do bot ou de um disparo manual |
+| Consulta por ID de usuário comum, sem `access_hash` | ID `5249367417`, run **não** disparada por mim; depois repetido por mim com o código novo | dados do usuário | `users.getUsers` não devolveu o usuário (run 41340413917). Com a segunda via, `users.getFullUser` respondeu `UserIdInvalidError` (run 41340622977). Em ambos o chat recebeu a explicação; jobs vermelhos | runs 41340413917 e 41340622977 | Confirmado para esse ID: a consulta por ID sem hash não funcionou. Não generaliza para todo usuário comum; contradiz a expectativa tirada do código do TDLib |
+| `@telegram` (canal) depois de ajustar a espera | mesmo alvo que antes deu `FloodWait` | relatório de canal | resolveu como canal; `getFullChannel` e foto; sem `FloodWait` desta vez | run 41340514301 | Confirmado para o canal. O caminho de espera nunca foi exercitado: o limite não voltou a ocorrer |
 
 O que isto não prova: o bot disparar o workflow sozinho (nenhum log do bot foi lido), o botão "Escolher usuário", mensagem encaminhada, contato, o limite de 1 busca por chat e a liberação da reserva.

@@ -107,10 +107,10 @@ async def entidade_por_id(cliente, numero):
         except errors.FloodWaitError:
             raise
         except errors.RPCError as erro:
-            raise LookupError(f"Consulta por ID sem access_hash: users.getUsers não devolveu o usuário e users.getFullUser respondeu {type(erro).__name__}.") from erro
+            raise LookupError(f"Consulta por ID sem access_hash: users.getUsers não devolveu o usuário e users.getFullUser respondeu {type(erro).__name__}. Para um usuário comum, tente o @username, encaminhe uma mensagem dele ou use o botão “Escolher usuário”.") from erro
         usuario = next((u for u in completo_.users if isinstance(u, User) and u.id == real), None)
         if usuario is None:
-            raise LookupError("Consulta por ID sem access_hash: users.getUsers e users.getFullUser não devolveram o usuário.")
+            raise LookupError("Consulta por ID sem access_hash: users.getUsers e users.getFullUser não devolveram o usuário. Para um usuário comum, tente o @username, encaminhe uma mensagem dele ou use o botão “Escolher usuário”.")
         return usuario
     if tipo is PeerChannel:
         resposta = await cliente(GetChannelsRequest([InputChannel(real, 0)]))
