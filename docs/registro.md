@@ -7,7 +7,7 @@ Data-base: 2026-11-01. Classificações:
 - **HIPÓTESE:** explicação plausível, ainda não confirmada.
 - **DECISÃO:** escolha do responsável pelo projeto, não exigência técnica universal.
 
-Um teste confirma apenas o cenário que foi exercitado. Um deploy concluído demonstra que a publicação terminou, e não que o comportamento do bot está correto. As evidências são execuções do GitHub Actions: `https://github.com/romastefale/infocard/actions/runs/<número>`. Fontes lidas por cópia local: documentação do Serverless extraída em 12/10/2026 e documentação do Bot API 10.3 extraída em 17/10/2026 (as páginas ao vivo de `core.telegram.org`, `docs.github.com` e `tl.telethon.dev` não abriram nesta sessão).
+Um teste confirma apenas o cenário que foi exercitado. Um deploy concluído demonstra que a publicação terminou, e não que o comportamento do bot está correto. As evidências são execuções do GitHub Actions: `https://github.com/romastefale/infocard/actions/runs/<número>`. Fontes lidas por cópia local: cópias da documentação do Serverless (extraídas em 10/10/2026 e 12/10/2026, no LoggerView e em `docs/`) e do Bot API (extraídas em 10/10, 12/10 e 17/10/2026, no LoggerView) (as páginas ao vivo de `core.telegram.org`, `docs.github.com` e `tl.telethon.dev` não abriram nesta sessão).
 
 ## 1. Verificações
 
