@@ -20,6 +20,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx --no-install tgcloud fetch
+      - name: Mesmo pacote a partir do runner
+        run: python3 -B scripts/probe-http.py
       - name: Capacidades
         run: |
           mkdir -p tgcloud/endpoints
