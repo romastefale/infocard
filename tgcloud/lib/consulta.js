@@ -31,7 +31,7 @@ export async function consultar(texto, contexto) {
       return relatorioFalha(entrada, falha, [orientacao]);
     }
     if (contexto.canal !== 'privado') {
-      return relatorioFalha(entrada, falha, ['A busca por MTProto só roda no privado: envie o @username ao bot em uma conversa privada.']);
+      return { ...relatorioFalha(entrada, falha, ['A busca por MTProto só roda no privado. Toque no botão acima para continuar lá.']), botaoPrivado: entrada.chat_id.slice(1) };
     }
     let reserva;
     try {

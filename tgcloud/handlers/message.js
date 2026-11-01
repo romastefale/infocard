@@ -21,7 +21,8 @@ export default async function (message) {
     } else if (mencionados.length) {
       resposta = relatorioMencionados(mencionados);
     } else {
-      resposta = await consultar(message.text || '', { canal: 'privado', chatId: message.chat.id });
+      const inicio = /^\/start(?:@\w+)?\s+(\S+)$/.exec(message.text || '');
+      resposta = await consultar(inicio ? inicio[1] : message.text || '', { canal: 'privado', chatId: message.chat.id });
     }
   } catch (e) {
     console.error('falha ao montar a resposta:', e);

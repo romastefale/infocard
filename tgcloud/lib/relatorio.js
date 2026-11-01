@@ -77,7 +77,7 @@ export function relatorioFalha(entrada, falha, extras = []) {
     linhas.push(`Erro: ${esc(falha.name)}: ${esc(recorte(falha.message, 500))}`);
   }
   if (entrada.tipo === 'username') {
-    linhas.push('O Bot API só resolve @username de canal, supergrupo ou bot (getChat).');
+    linhas.push('A documentação do getChat cobre @username de supergrupo ou canal.');
   }
   for (const extra of extras) linhas.push(esc(extra));
   return { titulo: recorte(`Não lido: ${entrada.rotulo}`, 100), html: linhas.join('\n'), teclado: true };

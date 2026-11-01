@@ -16,5 +16,5 @@ export default async function (query) {
     console.error('falha ao montar a resposta inline:', e);
     resposta = relatorioErro(e);
   }
-  await responderInline(query.id, resposta.titulo, resposta.html);
+  await responderInline(query.id, resposta.titulo, resposta.html, resposta.botaoPrivado);
 }

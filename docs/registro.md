@@ -146,3 +146,11 @@ Fonte: cópia de 17/10/2026 da documentação do Bot API (`ChatFullInfo`, `Messa
 | Erro inesperado nos handlers | sem resposta ao usuário | responde com o nome e a mensagem do erro | IMPLEMENTADO |
 
 Nenhum dos itens foi exercitado ao vivo.
+
+## 11. Busca inline de @username continua no privado (2026-11-01)
+
+Problema no código: no modo inline, um `@username` que o `getChat` não resolve (400) sempre terminava em erro, porque a busca por MTProto só pode rodar no privado e o inline responde na hora.
+
+Base: documentação do Bot API (cópia de 17/10/2026): `answerInlineQuery` aceita `button` (`InlineQueryResultsButton`) com `text` e `start_parameter` (1 a 64 caracteres, `A-Za-z0-9_-`); ao tocar, o usuário vai ao privado com o bot e o bot recebe `/start <parâmetro>`.
+
+Mudança: o resultado inline do 400 traz o botão "Buscar @usuario no privado" com o username (1 a 32 caracteres `A-Za-z0-9_`) como parâmetro; no privado, `/start usuario` é tratado como a consulta `usuario`. A nota "só roda no privado" aponta o botão. Também saiu "ou bot" do texto de falha do username: a documentação do `getChat` cita só supergrupo e canal. Situação: IMPLEMENTADO; o botão e o `/start` com parâmetro não foram exercitados.
