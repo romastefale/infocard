@@ -70,7 +70,7 @@ export function relatorioBuscando(entrada) {
   const linhas = [
     '<b>Buscando…</b>',
     `Entrada: ${esc(entrada.rotulo)} (${entrada.tipo === 'id' ? 'ID' : 'username'})`,
-    'O Bot API não resolveu essa entrada. Iniciei a busca por MTProto; a resposta chega neste chat em instantes.',
+    'O Bot API não resolveu essa entrada. Pedi a busca por MTProto; se ela concluir, a resposta chega neste chat. Se não chegar, a busca falhou ou ainda está na fila.',
   ];
   return { titulo: recorte(`Buscando ${entrada.rotulo}`, 100), html: linhas.join('\n') };
 }

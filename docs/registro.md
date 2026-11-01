@@ -87,3 +87,25 @@ As correções do commit `4f634de` foram feitas em lote (oito alterações junta
 Pendente por depender de ação do responsável: o `GH_DISPATCH_TOKEN` com Actions: Read and write. Sem ele, a seção 2 não avança e as hipóteses da seção 3 continuam abertas. Depois do deploy com o passo de validação verde, o próximo passo é enviar o `@username` e o ID de alguém que nunca usou o bot e anotar aqui o resultado observado.
 
 Os itens corrigidos em lote no commit `4f634de` não têm verificação individual; o registro os mantém na seção 2.
+
+## 7. Lista de 15 apontamentos: situação no código em 2026-11-01
+
+Conferido por leitura do código atual; nenhum item foi exercitado ao vivo.
+
+| # | Apontamento | Situação no código | Observação |
+|---|---|---|---|
+| 1 | Limite falha aberto | Corrigido: sem controle de limite, o bot não dispara e avisa | IMPLEMENTADO |
+| 2 | Limite não atômico | Corrigido: um `INSERT … SELECT … WHERE` e `rowsAffected` | IMPLEMENTADO |
+| 3 | Disparo duplicado | Corrigido: só o `getChat` é repetido | IMPLEMENTADO |
+| 4 | Retentativa sem espera | Não corrigido: o runtime não tem `setTimeout` (run 41326381391), então não há como esperar dentro do handler. Há uma única repetição imediata, só para `getChat` | Limitação |
+| 5 | 429 / `retry_after` | 429 não é repetido; o `retry_after` é mostrado ao usuário | IMPLEMENTADO |
+| 6 | Qualquer 400 aciona o MTProto | Mantido por decisão: não há classificação por texto de erro | DECISÃO |
+| 7 | Fallback HTML perde conteúdo | Parcial: o link vira `texto (url)` e as entidades são desfeitas; outras tags são removidas | IMPLEMENTADO |
+| 8 | Indicador de foto | Corrigido: o relatório diz "enviada junto", "existe, mas não foi possível enviar" ou "não" | IMPLEMENTADO |
+| 9 | Tamanho do relatório | Corrigido: o corte considera campos e avisos | IMPLEMENTADO |
+| 10 | Erro HTTP vira erro de JSON | Corrigido: `chamar` tolera corpo não JSON | IMPLEMENTADO |
+| 11 | Primeira entidade sem conferir | Corrigido: casamento por ID do peer | IMPLEMENTADO |
+| 12 | `curl` sem falhar em 4xx/5xx | Corrigido: `--fail-with-body` | IMPLEMENTADO |
+| 13 | Aceite do disparo como conclusão | Corrigido: o texto diz que a busca foi pedida e que a resposta só chega se ela concluir | IMPLEMENTADO |
+| 14 | Reserva fica após falha | Corrigido: a reserva é liberada se o disparo falha | IMPLEMENTADO |
+| 15 | Publicar antes de migrar | Corrigido: `migrate --safe --local` roda antes do `push` | VERIFICADO só para o caso sem mudança de schema (run 41332145298) |
