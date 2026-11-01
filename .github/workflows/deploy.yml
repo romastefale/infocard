@@ -76,3 +76,29 @@ jobs:
 
       - name: Estado do webhook
         run: npx --no-install tgcloud webhook
+
+      - name: Validar a permissão do GH_DISPATCH_TOKEN
+        env:
+          GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+        run: |
+          status=$(curl -sS -m 20 -o "$RUNNER_TEMP/validacao.json" -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $GH_DISPATCH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d '{"ref":"main","inputs":{}}' \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/resolver.yml/dispatches")
+          case "$status" in
+            422|204)
+              echo "GH_DISPATCH_TOKEN pode disparar o resolver.yml (HTTP $status; o teste vai sem a entrada obrigatória)."
+              ;;
+            401|403|404)
+              echo "::error::GH_DISPATCH_TOKEN não pode disparar o resolver.yml (HTTP $status). O token precisa da permissão Actions: Read and write neste repositório. Os módulos já foram publicados; a busca por MTProto fica indisponível até o token ser corrigido."
+              cat "$RUNNER_TEMP/validacao.json"
+              exit 1
+              ;;
+            *)
+              echo "::error::Resposta inesperada do GitHub ao validar o token (HTTP $status)."
+              cat "$RUNNER_TEMP/validacao.json"
+              exit 1
+              ;;
+          esac
