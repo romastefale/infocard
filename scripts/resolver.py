@@ -32,11 +32,6 @@ def corte(valor, limite=400):
     return texto if len(texto) <= limite else texto[:limite] + "…"
 
 
-def texto_puro(texto):
-    com_links = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r"\2 (\1)", texto)
-    return html.unescape(re.sub(r"<[^>]*>", "", com_links))
-
-
 def chamar(metodo, corpo, cabecalhos):
     pedido = urllib.request.Request(
         f"https://api.telegram.org/bot{os.environ['BOT_TOKEN']}/{metodo}",
@@ -65,9 +60,6 @@ def postar(chat_id, texto, formatado):
 
 def enviar(chat_id, texto):
     retorno = postar(chat_id, texto, True)
-    if not retorno.get("ok") and retorno.get("error_code") == 400:
-        print("envio em HTML recusado, reenviando como texto puro:", retorno.get("description"))
-        retorno = postar(chat_id, texto_puro(texto), False)
     if not retorno.get("ok"):
         raise RuntimeError(f"sendMessage falhou: {retorno.get('error_code')} {retorno.get('description')}")
     open(os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "notificado"), "w").close()

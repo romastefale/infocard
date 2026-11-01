@@ -38,7 +38,6 @@ Um teste confirma apenas o cenário que foi exercitado. Um deploy concluído dem
 | Botão "Escolher usuário", leitura de mensagem encaminhada e de contato | `envio.js`, `message.js`, `relatorio.js` | nada | uma execução real de cada |
 | Limite por chat e total, em uma instrução SQL | `limite.js` | a tabela existe | uma execução, inclusive concorrente |
 | Reserva desfeita se o disparo falha; bloqueio se o controle falha | `consulta.js` | nada | provocar as duas falhas |
-| Reenvio em texto puro se o HTML for recusado | `envio.js`, `resolver.py` | nada | uma recusa real |
 | Aviso ao chat quando o workflow falha sem responder | `resolver.yml` | nada | uma falha real do job |
 | Validação do token no deploy | `deploy.yml` | detectou o 403 | o caso `422`, com token correto |
 
@@ -154,3 +153,16 @@ Problema no código: no modo inline, um `@username` que o `getChat` não resolve
 Base: documentação do Bot API (cópia de 17/10/2026): `answerInlineQuery` aceita `button` (`InlineQueryResultsButton`) com `text` e `start_parameter` (1 a 64 caracteres, `A-Za-z0-9_-`); ao tocar, o usuário vai ao privado com o bot e o bot recebe `/start <parâmetro>`.
 
 Mudança: o resultado inline do 400 traz o botão "Buscar @usuario no privado" com o username (1 a 32 caracteres `A-Za-z0-9_`) como parâmetro; no privado, `/start usuario` é tratado como a consulta `usuario`. A nota "só roda no privado" aponta o botão. Também saiu "ou bot" do texto de falha do username: a documentação do `getChat` cita só supergrupo e canal. Situação: IMPLEMENTADO; o botão e o `/start` com parâmetro não foram exercitados.
+
+## 12. Handlers executados na plataforma e remoção do reenvio em texto puro (2026-11-01)
+
+Execução: workflow temporário com `tgcloud run`, que roda o código local na plataforma, com o SDK real (`getChat`, `sendMessage`, `fetch`), payloads montados por mim e resposta para o chat do responsável. Run 41345590300, commit `3453e3e`.
+
+| Comportamento | Condições | Esperado | Observado | Evidência | Situação |
+|---|---|---|---|---|---|
+| ID numérico desconhecido, privado | `text: "5249367417"` | `getChat` falha, resposta imediata, sem disparo | `getChat` 400 `chat not found`; o handler terminou sem exceção em 556 ms; nenhum workflow novo no resolver nesse instante | run 41345590300 | Confirmado nessa execução com payload sintético; a mensagem entregue ao usuário não foi lida por mim |
+| `/start <username>`, privado | `text: "/start tigrao"` | `getChat` 400, disparo do resolver | `getChat` 400; o handler terminou sem exceção em 1,8 s; o resolver ganhou um run `workflow_dispatch` às 20:12:00, que terminou com sucesso | runs 41345590300 e 41345609607 | Confirmado nessa execução: o código do handler dispara o resolver com o token do deploy |
+| `/start` sem parâmetro | `text: "/start"` | resposta de entrada não reconhecida | terminou sem exceção em 156 ms | run 41345590300 | Confirmado só a ausência de exceção |
+| Inline de username | `query: "tigrao"`, `id: "1"` | `getChat` 400, resposta inline com botão | `getChat` 400; `answerInlineQuery` falhou com `query is too old ... or query ID is invalid` (esperado, o ID da consulta era inventado); o código então repetia em texto puro e falhava de novo, com exceção | run 41345590300 | Defeito confirmado: o reenvio por qualquer 400 não tinha efeito. O botão **não** pôde ser validado: a consulta inline real é necessária |
+
+Mudança: `envio.js` e `resolver.py` deixam de reenviar em texto puro após um 400; o HTML é montado com escape e as marcas fixas `<b>`, `<code>` e `<a href>`, e uma recusa do Telegram aparece como erro registrado. Situação: IMPLEMENTADO; depende de redeploy.
