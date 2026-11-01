@@ -12,16 +12,15 @@ import uuid
 import telethon
 from telethon import TelegramClient, errors, utils
 from telethon.sessions import StringSession
-from telethon.tl.functions.channels import GetChannelsRequest, GetFullChannelRequest
+from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.contacts import ResolveUsernameRequest
-from telethon.tl.functions.users import GetFullUserRequest, GetUsersRequest
-from telethon.tl.types import Channel, InputChannel, InputUser, PeerChannel, PeerUser, User
+from telethon.tl.functions.users import GetFullUserRequest
+from telethon.tl.types import Channel, PeerChannel, PeerUser, User
 
 ESPERA_TOTAL = 600
 LIMITE_TEXTO = 4000
 USERNAME_VALIDO = re.compile(r"[A-Za-z0-9_]{1,32}")
 CHAT_VALIDO = re.compile(r"-?[0-9]{1,16}")
-ID_VALIDO = re.compile(r"-?[0-9]{1,16}")
 
 
 def esc(valor):
@@ -95,29 +94,6 @@ def entidade_de(resultado):
     return next((c for c in resultado.chats if getattr(c, "id", None) == alvo_id), None)
 
 
-async def entidade_por_id(cliente, numero):
-    real, tipo = utils.resolve_id(numero)
-    if tipo is PeerUser:
-        encontrados = await cliente(GetUsersRequest([InputUser(real, 0)]))
-        usuario = next((u for u in encontrados if isinstance(u, User)), None)
-        if usuario is not None:
-            return usuario
-        try:
-            completo_ = await cliente(GetFullUserRequest(InputUser(real, 0)))
-        except errors.FloodWaitError:
-            raise
-        except errors.RPCError as erro:
-            raise LookupError(f"Consulta por ID sem access_hash: users.getUsers não devolveu o usuário e users.getFullUser respondeu {type(erro).__name__}. Para um usuário comum, tente o @username, encaminhe uma mensagem dele ou use o botão “Escolher usuário”.") from erro
-        usuario = next((u for u in completo_.users if isinstance(u, User) and u.id == real), None)
-        if usuario is None:
-            raise LookupError("Consulta por ID sem access_hash: users.getUsers e users.getFullUser não devolveram o usuário. Para um usuário comum, tente o @username, encaminhe uma mensagem dele ou use o botão “Escolher usuário”.")
-        return usuario
-    if tipo is PeerChannel:
-        resposta = await cliente(GetChannelsRequest([InputChannel(real, 0)]))
-        return next((c for c in resposta.chats if isinstance(c, Channel)), None)
-    raise LookupError("Só IDs de usuário, canal ou supergrupo podem ser consultados por MTProto.")
-
-
 async def completo(cliente, entidade):
     if isinstance(entidade, User):
         return (await cliente(GetFullUserRequest(entidade))).full_user
@@ -148,10 +124,7 @@ async def coletar(alvo):
     cliente = TelegramClient(StringSession(), int(os.environ["API_ID"]), os.environ["API_HASH"])
     try:
         await com_espera(lambda: cliente.start(bot_token=os.environ["BOT_TOKEN"]))
-        if ID_VALIDO.fullmatch(alvo):
-            entidade = await com_espera(lambda: entidade_por_id(cliente, int(alvo)))
-        else:
-            entidade = entidade_de(await com_espera(lambda: cliente(ResolveUsernameRequest(alvo))))
+        entidade = entidade_de(await com_espera(lambda: cliente(ResolveUsernameRequest(alvo))))
         if entidade is None:
             raise LookupError("O Telegram não devolveu os dados dessa entrada.")
         dados = {"entidade": entidade, "completo": None, "foto": None, "notas": []}
@@ -177,7 +150,7 @@ def campos_presentes(objeto):
 def descrever(entidade, completo_, alvo):
     foto = getattr(entidade, "photo", None)
     info = {
-        "consultado": f"ID {alvo}" if ID_VALIDO.fullmatch(alvo) else f"@{alvo}",
+        "consultado": f"@{alvo}",
         "id": utils.get_peer_id(entidade),
         "username": getattr(entidade, "username", None),
         "usernames": [u.username for u in (getattr(entidade, "usernames", None) or []) if getattr(u, "active", False)],
@@ -288,7 +261,7 @@ def relatorio(info, notas, foto):
 
 
 def falha(alvo, motivo):
-    entrada = f"{alvo} (ID)" if ID_VALIDO.fullmatch(alvo) else f"@{alvo} (username)"
+    entrada = f"@{alvo} (username)"
     return f"<b>Não foi possível ler</b>\nEntrada: {esc(entrada)}\n{esc(motivo)}"
 
 
@@ -299,8 +272,8 @@ async def principal():
     if chat and not CHAT_VALIDO.fullmatch(chat):
         print("CHAT_ID inválido")
         return 1
-    if not (USERNAME_VALIDO.fullmatch(alvo) or ID_VALIDO.fullmatch(alvo)):
-        texto = falha(alvo or "(vazio)", "Entrada inválida: use um username (1 a 32 letras, números ou _) ou um ID numérico.")
+    if not USERNAME_VALIDO.fullmatch(alvo):
+        texto = falha(alvo or "(vazio)", "Entrada inválida: use um username (1 a 32 letras, números ou _).")
         print("entrada inválida")
         codigo = 1
     else:

@@ -35,7 +35,6 @@ Um teste confirma apenas o cenário que foi exercitado. Um deploy concluído dem
 |---|---|---|---|
 | Disparo do workflow pelo bot e resposta "Buscando…" | `consulta.js`, `despacho.js` | o token atual passa na validação do deploy | um disparo real feito pelo bot (204) e a resposta chegando |
 | Relatório MTProto completo (bio, aniversário, dados comerciais, bot, canal) e envio da foto | `scripts/resolver.py` | usuário e bot lidos, foto enviada (seção 8) | `getFullChannel` com sucesso, e um usuário com bio, aniversário ou dados comerciais |
-| Consulta de ID por MTProto | `resolver.py` (`entidade_por_id`) | ID 777000 resolvido (seção 8) | ID de usuário comum, de canal e de supergrupo |
 | Botão "Escolher usuário", leitura de mensagem encaminhada e de contato | `envio.js`, `message.js`, `relatorio.js` | nada | uma execução real de cada |
 | Limite por chat e total, em uma instrução SQL | `limite.js` | a tabela existe | uma execução, inclusive concorrente |
 | Reserva desfeita se o disparo falha; bloqueio se o controle falha | `consulta.js` | nada | provocar as duas falhas |
@@ -132,7 +131,7 @@ O que isto não prova: o bot disparar o workflow sozinho (nenhum log do bot foi 
 
 Base: (a) no `td`, um bot monta `inputUser(id, 0)` para usuário desconhecido (`UserManager.cpp:5332-5335`), mas o código não diz que o servidor aceita; (b) o 777000 é caso fixo do TDLib (`UserManager.cpp:5143-5149`); (c) o único ID de usuário comum testado falhou nas duas chamadas, `users.getUsers` e `users.getFullUser` (seção 8); (d) a documentação do `getChat` cobre ID ou username de supergrupo ou canal.
 
-Mudança: para entrada numérica que o `getChat` não resolve, o bot responde na hora com o erro da API e indica o botão "Escolher usuário", a mensagem encaminhada e o `@username`, sem reservar limite nem disparar o workflow. Só `@username` dispara a busca MTProto. Canais e supergrupos por ID não foram testados e também deixam de disparar. Situação: IMPLEMENTADO; a resposta real do bot a um ID não foi observada. O caminho por ID do `resolver.py` continua acessível só por disparo manual do workflow.
+Mudança: para entrada numérica que o `getChat` não resolve, o bot responde na hora com o erro da API e indica o botão "Escolher usuário", a mensagem encaminhada e o `@username`, sem reservar limite nem disparar o workflow. Só `@username` dispara a busca MTProto. Canais e supergrupos por ID não foram testados e também deixam de disparar. Situação: IMPLEMENTADO; a resposta real do bot a um ID não foi observada. O caminho por ID do `resolver.py` foi removido, por não ter mais chamador.
 
 ## 10. Revisão do código contra a documentação do Bot API (2026-11-01)
 

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       alvo:
-        description: "Username (sem @) ou ID numérico a resolver"
+        description: "Username (sem @) a resolver"
         required: true
       chat:
         description: "ID do chat que recebe a resposta (vazio: só mostra no log)"
