@@ -26,6 +26,6 @@ Cada push na `main` que altera `tgcloud/**`, `tgcloud.jsonc`, `package.json`, `p
 ## Estrutura
 
 - `tgcloud/handlers/`: `message.js` (privado) e `inline_query.js`.
-- `tgcloud/lib/`: `entrada.js` (lê @username ou ID), `consulta.js` (chama o `getChat` e, se falhar para username, a busca MTProto), `despacho.js` (dispara o workflow pela API do GitHub), `segredos.js` (preenchido no deploy), `relatorio.js` (monta a resposta em HTML).
+- `tgcloud/lib/`: `entrada.js` (lê @username ou ID), `consulta.js` (chama o `getChat` e, se falhar para username, a busca MTProto), `despacho.js` (dispara o workflow pela API do GitHub), `tentativa.js` (uma nova tentativa em falha transitória), `envio.js` (envia em HTML e, se o Telegram recusar, reenvia em texto puro), `segredos.js` (preenchido no deploy), `relatorio.js` (monta a resposta em HTML).
 - `scripts/resolver.py` e `.github/workflows/resolver.yml`: busca de username por MTProto com Telethon.
 - `docs/`: documentação oficial do Serverless e referência do SDK.

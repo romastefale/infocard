@@ -4,7 +4,11 @@ import { GH_DISPATCH_TOKEN } from './segredos.js';
 const URL_DISPARO = 'https://api.github.com/repos/romastefale/infocard/actions/workflows/resolver.yml/dispatches';
 
 export async function dispararBusca(username, chatId) {
-  if (!GH_DISPATCH_TOKEN) throw new Error('GH_DISPATCH_TOKEN não foi injetado no deploy');
+  if (!GH_DISPATCH_TOKEN) {
+    const erro = new Error('GH_DISPATCH_TOKEN não foi injetado no deploy');
+    erro.status = 0;
+    throw erro;
+  }
   const res = await fetch(URL_DISPARO, {
     method: 'POST',
     headers: {
@@ -17,6 +21,8 @@ export async function dispararBusca(username, chatId) {
   });
   if (res.status !== 204) {
     const corpo = await res.text();
-    throw new Error(`GitHub respondeu ${res.status}: ${corpo.slice(0, 300)}`);
+    const erro = new Error(`GitHub respondeu ${res.status}: ${corpo.slice(0, 300)}`);
+    erro.status = res.status;
+    throw erro;
   }
 }

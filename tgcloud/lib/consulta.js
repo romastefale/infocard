@@ -1,7 +1,11 @@
 import { api, BotApiError } from 'sdk';
 import { lerEntrada } from './entrada.js';
 import { dispararBusca } from './despacho.js';
+import { comRetentativa } from './tentativa.js';
 import { relatorioLeitura, relatorioFalha, relatorioInvalido, relatorioBuscando } from './relatorio.js';
+
+const transitorioApi = (e) => !(e instanceof BotApiError) || e.code >= 500;
+const transitorioGitHub = (e) => e.status === undefined || e.status >= 500;
 
 function falhaDaApi(e) {
   if (e instanceof BotApiError) {
@@ -14,7 +18,7 @@ export async function consultar(texto, contexto) {
   const entrada = lerEntrada(texto);
   if (entrada.erro) return relatorioInvalido(texto);
   try {
-    return relatorioLeitura(await api.getChat({ chat_id: entrada.chat_id }));
+    return relatorioLeitura(await comRetentativa(() => api.getChat({ chat_id: entrada.chat_id }), transitorioApi));
   } catch (e) {
     console.error('getChat falhou:', entrada.rotulo, e);
     const falha = falhaDaApi(e);
@@ -24,7 +28,7 @@ export async function consultar(texto, contexto) {
       return relatorioFalha(entrada, falha, ['A busca por MTProto só roda no privado: envie o @username ao bot em uma conversa privada.']);
     }
     try {
-      await dispararBusca(entrada.chat_id.slice(1), contexto.chatId);
+      await comRetentativa(() => dispararBusca(entrada.chat_id.slice(1), contexto.chatId), transitorioGitHub);
       return relatorioBuscando(entrada);
     } catch (erroDespacho) {
       console.error('dispararBusca falhou:', erroDespacho);

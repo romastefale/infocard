@@ -14,6 +14,7 @@ from telethon.sessions import StringSession
 from telethon.tl.functions.contacts import ResolveUsernameRequest
 from telethon.tl.types import Channel, PeerUser, User
 
+ESPERA_MAXIMA = 120
 USERNAME_VALIDO = re.compile(r"[A-Za-z0-9_]{1,32}")
 CHAT_VALIDO = re.compile(r"-?[0-9]{1,16}")
 
@@ -22,18 +23,31 @@ def esc(valor):
     return html.escape(str(valor), quote=False)
 
 
-def enviar(chat_id, texto):
-    corpo = json.dumps({"chat_id": int(chat_id), "text": texto, "parse_mode": "HTML"}).encode()
+def texto_puro(texto):
+    return html.unescape(re.sub(r"<[^>]*>", "", texto))
+
+
+def postar(chat_id, texto, formatado):
+    carga = {"chat_id": int(chat_id), "text": texto}
+    if formatado:
+        carga["parse_mode"] = "HTML"
     pedido = urllib.request.Request(
         f"https://api.telegram.org/bot{os.environ['BOT_TOKEN']}/sendMessage",
-        data=corpo,
+        data=json.dumps(carga).encode(),
         headers={"Content-Type": "application/json"},
     )
     try:
         with urllib.request.urlopen(pedido, timeout=20) as resposta:
-            retorno = json.load(resposta)
+            return json.load(resposta)
     except urllib.error.HTTPError as erro:
-        retorno = json.load(erro)
+        return json.load(erro)
+
+
+def enviar(chat_id, texto):
+    retorno = postar(chat_id, texto, True)
+    if not retorno.get("ok") and retorno.get("error_code") == 400:
+        print("envio em HTML recusado, reenviando como texto puro:", retorno.get("description"))
+        retorno = postar(chat_id, texto_puro(texto), False)
     if not retorno.get("ok"):
         raise RuntimeError(f"sendMessage falhou: {retorno.get('error_code')} {retorno.get('description')}")
     open(os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "notificado"), "w").close()
@@ -41,9 +55,11 @@ def enviar(chat_id, texto):
 
 def descrever(resultado, alvo):
     if isinstance(resultado.peer, PeerUser):
-        entidade = next(u for u in resultado.users if u.id == resultado.peer.user_id)
+        entidade = next((u for u in resultado.users if u.id == resultado.peer.user_id), None)
     else:
-        entidade = resultado.chats[0]
+        entidade = resultado.chats[0] if resultado.chats else None
+    if entidade is None:
+        raise LookupError("O Telegram não devolveu os dados desse username.")
     foto = getattr(entidade, "photo", None)
     usernames = [u.username for u in (getattr(entidade, "usernames", None) or []) if getattr(u, "active", False)]
     info = {
@@ -95,9 +111,16 @@ def falha(alvo, motivo):
 
 async def resolver(alvo):
     cliente = TelegramClient(StringSession(), int(os.environ["API_ID"]), os.environ["API_HASH"])
-    await cliente.start(bot_token=os.environ["BOT_TOKEN"])
     try:
-        return await cliente(ResolveUsernameRequest(alvo))
+        for tentativa in (1, 2):
+            try:
+                await cliente.start(bot_token=os.environ["BOT_TOKEN"])
+                return await cliente(ResolveUsernameRequest(alvo))
+            except errors.FloodWaitError as erro:
+                if tentativa == 2 or erro.seconds > ESPERA_MAXIMA:
+                    raise
+                print("FloodWaitError", erro.seconds, "- aguardando para tentar de novo")
+                await asyncio.sleep(erro.seconds + 1)
     finally:
         await cliente.disconnect()
 
@@ -130,6 +153,10 @@ async def principal():
         except errors.FloodWaitError as erro:
             texto = falha(alvo, f"Limite do Telegram atingido: aguarde {erro.seconds} s.")
             print("FloodWaitError", erro.seconds)
+            codigo = 1
+        except LookupError as erro:
+            texto = falha(alvo, str(erro))
+            print("LookupError", erro)
             codigo = 1
         except errors.RPCError as erro:
             texto = falha(alvo, f"O Telegram respondeu {type(erro).__name__}: {erro}")
