@@ -34,7 +34,7 @@ jobs:
       - name: Página pública t.me
         continue-on-error: true
         run: |
-          node scripts/diag-probe.mjs "$TEXTO" telegram zzzz_no_user_918273
+          node scripts/diag-probe.mjs https://example.com https://t.me/telegram https://telegram.me/telegram https://telegram.dog/telegram https://telegram.org https://api.telegram.org
       - name: handlers/message
         continue-on-error: true
         run: |
