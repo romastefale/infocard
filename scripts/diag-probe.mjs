@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const ENDPOINT = 'tgcloud/endpoints/probe.js';
 const alvos = process.argv.slice(2).map((a) => a.replace(/^@/, '')).filter(Boolean);
 
+fs.mkdirSync('tgcloud/endpoints', { recursive: true });
 fs.writeFileSync(ENDPOINT, `import { fetch } from 'sdk';
 
 const ALVOS = ${JSON.stringify(alvos)};
@@ -24,5 +25,5 @@ try {
   const r = spawnSync('npx', ['--no-install', 'tgcloud', 'run', 'endpoints/probe', '{}'], { stdio: 'inherit' });
   process.exitCode = r.status ?? 1;
 } finally {
-  fs.rmSync(ENDPOINT, { force: true });
+  fs.rmSync('tgcloud/endpoints', { recursive: true, force: true });
 }
