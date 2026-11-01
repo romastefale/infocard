@@ -1,0 +1,42 @@
+name: Executar handlers na plataforma
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  executar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx --no-install tgcloud fetch
+      - name: Injetar segredos
+        env:
+          GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+        run: node -e "require('fs').writeFileSync('tgcloud/lib/segredos.js', 'export const GH_DISPATCH_TOKEN = ' + JSON.stringify(process.env.GH_DISPATCH_TOKEN) + ';\n')"
+      - name: ID numérico desconhecido, privado
+        continue-on-error: true
+        run: |
+          npx --no-install tgcloud run handlers/message '{ chat: { id: 8921622168, type: "private" }, text: "5249367417" }'
+      - name: /start com username, privado
+        continue-on-error: true
+        run: |
+          npx --no-install tgcloud run handlers/message '{ chat: { id: 8921622168, type: "private" }, text: "/start tigrao" }'
+      - name: Username em inline
+        continue-on-error: true
+        run: |
+          npx --no-install tgcloud run handlers/inline_query '{ id: "1", from: { id: 8921622168 }, query: "tigrao", offset: "" }'
+      - name: Entrada inválida, privado
+        continue-on-error: true
+        run: |
+          npx --no-install tgcloud run handlers/message '{ chat: { id: 8921622168, type: "private" }, text: "/start" }'
