@@ -68,7 +68,8 @@ function fatorar(n) {
   return null;
 }
 
-async function pedirPQ(url) {
+async function pedirPQ(alvo) {
+  const url = alvo.url;
   const nonce = new Uint8Array(16);
   for (let i = 0; i < 16; i++) nonce[i] = Math.floor(Math.random() * 256);
   const corpo = new Uint8Array(40);
@@ -77,9 +78,12 @@ async function pedirPQ(url) {
   dv.setUint32(16, 20, true);
   dv.setUint32(20, 0xbe7e8ef1, true);
   corpo.set(nonce, 24);
-  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: corpo });
+  const headers = { ...(alvo.headers || {}) };
+  if (alvo.ct !== null) headers['Content-Type'] = alvo.ct || 'application/octet-stream';
+  const res = await fetch(url, { method: 'POST', headers, body: corpo });
   const lido = await lerCorpo(res);
-  console.log(url, 'status', res.status, 'content-type', res.headers.get('content-type'), 'bytes', lido.tamanho, 'chunks', lido.tipos.join(','));
+  console.log(JSON.stringify(alvo), 'status', res.status, 'bytes', lido.tamanho);
+  console.log('  cabecalhos', JSON.stringify(Array.from(res.headers.entries())));
   console.log('  inicio', hex(lido.bytes, 56));
   const b = lido.bytes;
   if (b.length < 60) return;
@@ -115,17 +119,27 @@ export default async function () {
   const p = await lerCorpo(png);
   console.log('png status', png.status, 'content-length', png.headers.get('content-length'), 'lido', p.tamanho, 'chunks', p.tipos.join(','), 'texto', p.texto, 'assinatura', hex(p.bytes, 8), '(esperado 89504e470d0a1a0a)');
 
+  console.log('relogio', new Date().toISOString(), 'WebSocket', typeof globalThis.WebSocket, 'fetch.length', typeof fetch);
+  const origem = { Origin: 'https://web.telegram.org', Referer: 'https://web.telegram.org/' };
   const alvos = [
-    'https://venus.web.telegram.org/api',
-    'https://venus.web.telegram.org/apiw',
-    'https://venus.web.telegram.org:443/apiws',
-    'http://149.154.167.51:80/api',
+    { url: 'https://venus.web.telegram.org/api', headers: origem },
+    { url: 'https://venus.web.telegram.org/apiw', headers: origem },
+    { url: 'https://venus.web.telegram.org/api', ct: 'application/x-www-form-urlencoded' },
+    { url: 'https://venus.web.telegram.org/api', ct: null },
+    { url: 'https://pluto.web.telegram.org/api', headers: origem },
+    { url: 'https://flora.web.telegram.org/api', headers: origem },
+    { url: 'https://venus-1.web.telegram.org/api', headers: origem },
+    { url: 'http://149.154.167.51/api' },
+    { url: 'http://149.154.167.51:80/apiw' },
+    { url: 'http://149.154.167.91/api' },
+    { url: 'http://91.108.56.130/api' },
+    { url: 'http://149.154.175.50/api' },
   ];
-  for (const url of alvos) {
+  for (const alvo of alvos) {
     try {
-      await pedirPQ(url);
+      await pedirPQ(alvo);
     } catch (e) {
-      console.log(url, 'FALHOU', e.name + ': ' + e.message);
+      console.log(JSON.stringify(alvo), 'FALHOU', e.name + ': ' + e.message);
     }
   }
   return { ok: true };
