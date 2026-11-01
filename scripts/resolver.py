@@ -34,7 +34,8 @@ def corte(valor, limite=400):
 
 
 def texto_puro(texto):
-    return html.unescape(re.sub(r"<[^>]*>", "", texto))
+    com_links = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r"\2 (\1)", texto)
+    return html.unescape(re.sub(r"<[^>]*>", "", com_links))
 
 
 def chamar(metodo, corpo, cabecalhos):

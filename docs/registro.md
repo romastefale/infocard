@@ -100,7 +100,7 @@ Conferido por leitura do código atual; nenhum item foi exercitado ao vivo.
 | 4 | Retentativa sem espera | Não corrigido: o runtime não tem `setTimeout` (run 41326381391), então não há como esperar dentro do handler. Há uma única repetição imediata, só para `getChat` | Limitação |
 | 5 | 429 / `retry_after` | 429 não é repetido; o `retry_after` é mostrado ao usuário | IMPLEMENTADO |
 | 6 | Qualquer 400 aciona o MTProto | Mantido por decisão: não há classificação por texto de erro | DECISÃO |
-| 7 | Fallback HTML perde conteúdo | Parcial: o link vira `texto (url)` e as entidades são desfeitas; outras tags são removidas | IMPLEMENTADO |
+| 7 | Fallback HTML perde conteúdo | Os relatórios só usam `<a href>`, `<b>` e `<code>` (conferido por busca no código). O link vira `texto (url)` no JavaScript e, desde esta revisão, também no `resolver.py`; `<b>` e `<code>` só perdem a formatação; o texto é escapado antes, e as entidades são desfeitas depois | IMPLEMENTADO |
 | 8 | Indicador de foto | Corrigido: o relatório diz "enviada junto", "existe, mas não foi possível enviar" ou "não" | IMPLEMENTADO |
 | 9 | Tamanho do relatório | Corrigido: o corte considera campos e avisos | IMPLEMENTADO |
 | 10 | Erro HTTP vira erro de JSON | Corrigido: `chamar` tolera corpo não JSON | IMPLEMENTADO |
