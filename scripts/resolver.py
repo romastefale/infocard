@@ -36,6 +36,7 @@ def enviar(chat_id, texto):
         retorno = json.load(erro)
     if not retorno.get("ok"):
         raise RuntimeError(f"sendMessage falhou: {retorno.get('error_code')} {retorno.get('description')}")
+    open(os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "notificado"), "w").close()
 
 
 def descrever(resultado, alvo):

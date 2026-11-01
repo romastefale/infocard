@@ -43,3 +43,14 @@ jobs:
           cache-dependency-path: scripts/resolver-requirements.txt
       - run: pip install -r scripts/resolver-requirements.txt
       - run: python scripts/resolver.py
+      - name: Avisar o chat se a busca falhou sem resposta
+        if: failure() || cancelled()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -f "$RUNNER_TEMP/notificado" ]; then exit 0; fi
+          if [ -z "$BOT_TOKEN" ] || [ -z "$CHAT_ID" ]; then exit 0; fi
+          curl -sS -m 20 -o /dev/null -w "sendMessage: %{http_code}\n" \
+            --data-urlencode "chat_id=$CHAT_ID" \
+            --data-urlencode "text=A busca por @${ALVO} falhou antes de dar resultado. Log: $RUN_URL" \
+            "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage"
